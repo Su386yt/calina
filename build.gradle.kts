@@ -11,6 +11,8 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
+    implementation("com.google.code.gson:gson:2.11.0")
+    implementation("com.drewnoakes:metadata-extractor:2.18.0")
 }
 
 tasks.test {
