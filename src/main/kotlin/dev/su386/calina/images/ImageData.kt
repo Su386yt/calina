@@ -1,8 +1,7 @@
-package dev.su386.calina.data
+package dev.su386.calina.images
 
 import com.drew.imaging.ImageMetadataReader
 import com.drew.metadata.exif.ExifImageDirectory
-import com.drew.metadata.exif.ExifSubIFDDirectory
 import com.drew.metadata.exif.ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL
 import com.drew.metadata.exif.GpsDirectory
 import dev.su386.calina.utils.Location
@@ -13,7 +12,6 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.security.MessageDigest
 import java.util.*
 import javax.imageio.ImageIO
-import javax.imageio.plugins.tiff.ExifGPSTagSet.*
 
 class ImageData(
     val location: Location,
