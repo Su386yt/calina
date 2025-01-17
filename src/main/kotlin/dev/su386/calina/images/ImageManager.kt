@@ -20,7 +20,7 @@ object ImageManager {
      * @param path - Start directory (note: the method loads images recursively)
      */
     fun readImageData(path: String) {
-        File(path).walkBottomUp()
+        File(path).walk()
             .filter { !it.isDirectory && it.extension in acceptedFileTypes  && it.path !in loadedPaths  }
             .forEach {
                 val newImage = it.toImageData()
@@ -43,8 +43,8 @@ object ImageManager {
         images[imageData.hash] = imageData
         imageData.tags.addAll(
             Tag.tags.values
-                .filter { imageData.hash in it.imageHashes }
-                .map { it.uuid }
+                .filter { it.imageHashes.contains(imageData.hash) }
+                .mapNotNull { it.uuid }
         )
 
         loadedPaths.addAll(imageData.filePaths)

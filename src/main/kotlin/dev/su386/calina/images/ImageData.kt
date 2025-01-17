@@ -4,6 +4,7 @@ import com.drew.imaging.ImageMetadataReader
 import com.drew.metadata.exif.ExifImageDirectory
 import com.drew.metadata.exif.ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL
 import com.drew.metadata.exif.GpsDirectory
+import com.google.gson.annotations.Expose
 import dev.su386.calina.utils.Location
 import java.awt.Image
 import java.io.File
@@ -14,12 +15,17 @@ import java.util.*
 import javax.imageio.ImageIO
 
 class ImageData(
+    @Expose
     val location: Location,
+    @Expose
     val date: Long,
+    @Expose
     val hash: String,
+    @Expose
     val cameraInfo: CameraInfo,
     vararg paths: String
 ) {
+    @Expose
     var filePaths = paths as Array<String>
 
     /**
@@ -37,7 +43,8 @@ class ImageData(
     }
 
     val dateTime: Date get() = Date(date)
-    @Transient
+
+    @Expose(serialize = false, deserialize = false)
     val tags: MutableSet<UUID> = mutableSetOf()
 
     /**
@@ -65,14 +72,18 @@ class ImageData(
          * If no metadata exists in an image, it returns a metadata with default values.
          */
         fun File.toImageData(): ImageData {
-            val metadata = ImageMetadataReader.readMetadata(this)
+            val metadata = try {
+                ImageMetadataReader.readMetadata(this)
+            } catch (e: Exception) {
+                null
+            }
 
-            val gpsDirectory = metadata.getFirstDirectoryOfType(GpsDirectory::class.java)
+            val gpsDirectory = metadata?.getFirstDirectoryOfType(GpsDirectory::class.java)
             val location = gpsDirectory?.geoLocation?.let {
                 Location(it.latitude, it.longitude)
             } ?: Location.EMPTY
 
-            val exifData = metadata.getFirstDirectoryOfType(ExifImageDirectory::class.java)
+            val exifData = metadata?.getFirstDirectoryOfType(ExifImageDirectory::class.java)
             val time = exifData
                 ?.getDate(TAG_DATETIME_ORIGINAL)
                 ?.time

@@ -27,7 +27,7 @@ class Tag(
          * @see dev.su386.calina.data.Database.writeData
          */
         fun saveTags() {
-            writeData("tags/tags.json", tags.values)
+            writeData("tags/tags.json", tags.values, true)
         }
 
         /**
@@ -36,7 +36,7 @@ class Tag(
          * @see dev.su386.calina.data.Database.readData
          */
         fun loadTags() {
-            readData<MutableCollection<Tag>>("tags/tags.json")
+            readData<MutableCollection<Tag>>("tags/tags.json", true)
                 ?.associateBy { it.uuid }
                 ?.let { tags.putAll(it) }
         }

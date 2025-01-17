@@ -13,6 +13,7 @@ object Database {
      * @link https://docs.oracle.com/javase/tutorial/essential/environment/sysprop.html
      */
     val PATH = "${System.getProperty("user.home")}/calina"
+    val exposeGson = GsonBuilder().excludeFieldsWithoutExposeAnnotation().setPrettyPrinting().create()
     val gson = GsonBuilder().setPrettyPrinting().create()
     val cache = mutableMapOf<String, String>()
 
@@ -23,7 +24,10 @@ object Database {
      * @param path - The path the data is stored as
      * @return data at the database location of the instance T
      */
-    inline fun <reified T> readData(path: String): T? {
+    inline fun <reified T> readData(
+        path: String,
+        respectExposeAnnotations: Boolean = false
+    ): T? {
         val typeToken = object : TypeToken<T>() {}.type
         val content = cache.getOrPut(path) {
             val file = File("$PATH/${path.trim('/', '.')}")
@@ -31,7 +35,12 @@ object Database {
             file.bufferedReader().use { it.readText() }
         }
 
-        return gson.fromJson(content, typeToken)
+
+        return if (respectExposeAnnotations) {
+            exposeGson.fromJson(content, typeToken)
+        } else {
+            gson.fromJson(content, typeToken)
+        }
     }
 
     /**
@@ -40,12 +49,16 @@ object Database {
      * @param path - Local path within database
      * @param data - Data to be stored in the database
      */
-    fun writeData(path: String, data: Any) {
+    fun writeData(path: String, data: Any, respectExposeAnnotations: Boolean = false) {
         val file = File("$PATH/${path.trim('/', '.')}")
         Files.createDirectories(file.toPath().parent)
         file.createNewFile()
         file.setWritable(true)
-        val string = gson.toJson(data)
+        val string = if (respectExposeAnnotations) {
+            exposeGson.toJson(data)
+        } else {
+            gson.toJson(data)
+        }
         file.bufferedWriter().use { it.write(string) }
 
         cache[path] = string
