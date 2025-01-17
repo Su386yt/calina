@@ -18,7 +18,7 @@ fun main() {
         ImageManager.readImageData(string)
     }
 
-    Tag.tags[UUID.fromString("41b27d08-a801-42d0-a866-fd6b77b2aeca")]?.let {tag ->
+    Tag.tags[UUID.fromString("41b27d08-a801-42d0-a866-fd6b77b2aeca")]?.let { tag ->
         ImageManager.images.values.forEach {
             it.addTag(tag)
         }
