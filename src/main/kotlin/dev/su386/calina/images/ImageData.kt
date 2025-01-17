@@ -18,30 +18,24 @@ class ImageData(
     val date: Long,
     val hash: String,
     val cameraInfo: CameraInfo,
-    val cachedPath: String
+    vararg paths: String
 ) {
-    /**
-     * Attempts to load the image at cachedPath.
-     * If the hash of image matches hash, returns the image
-     * Otherwise, null
-     */
-    val image: Image? get() {
-        val file = File(cachedPath)
-        val bytes = file.readBytes()
+    var filePaths = paths as Array<String>
 
-        return if (file.exists() && bytes.hashSHA() == hash) {
-            try {
-                ImageIO.read(bytes.inputStream())
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
-            }
-        } else {
-            null
-        }
+    /**
+     * Returns an array of all valid images associated with this image data.
+     */
+    val images: Array<Image> get() {
+        return filePaths.mapNotNull { path ->
+                val file = File(path)
+                if (file.exists() && file.readBytes().hashSHA() == hash) {
+                    ImageIO.read(file)
+                } else {
+                    null
+                }
+            }.toTypedArray()
     }
 
-    val id: String get() = "$hash+$cachedPath"
     val dateTime: Date get() = Date(date)
     @Transient
     val tags: MutableSet<UUID> = mutableSetOf()
@@ -55,7 +49,6 @@ class ImageData(
         tags.add(tag.uuid)
         tag.imageHashes.add(this.hash)
     }
-
 
     companion object {
         /**

@@ -37,9 +37,8 @@ class Tag(
          */
         fun loadTags() {
             readData<MutableCollection<Tag>>("tags/tags.json")
-            ?.forEach {
-                tags[it.uuid] = it
-            }
+                ?.associateBy { it.uuid }
+                ?.let { tags.putAll(it) }
         }
     }
 }

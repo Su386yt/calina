@@ -3,6 +3,7 @@ package dev.su386.calina.images
 import dev.su386.calina.data.Database.readData
 import dev.su386.calina.data.Database.writeData
 import dev.su386.calina.images.ImageData.Companion.toImageData
+import kotlin.collections.plus
 import java.io.File
 
 object ImageManager {
@@ -34,13 +35,19 @@ object ImageManager {
      * @param imageData - Image to be loaded into
      */
     private fun registerImage(imageData: ImageData) {
-        images[imageData.id] = imageData
+        if (imageData.hash in images) {
+            images[imageData.hash]?.let { it.filePaths += imageData.filePaths }
+            return
+        }
 
-        Tag.tags.values
-            .filter { imageData.hash in it.imageHashes }
-            .forEach { imageData.tags.add(it.uuid) }
+        images[imageData.hash] = imageData
+        imageData.tags.addAll(
+            Tag.tags.values
+                .filter { imageData.hash in it.imageHashes }
+                .map { it.uuid }
+        )
 
-        loadedPaths.add(imageData.cachedPath)
+        loadedPaths.addAll(imageData.filePaths)
     }
 
     /**
