@@ -42,8 +42,20 @@ class ImageData(
     }
 
     val id: String get() = "$hash+$cachedPath"
-
     val dateTime: Date get() = Date(date)
+    @Transient
+    val tags: MutableSet<UUID> = mutableSetOf()
+
+    /**
+     * Adds a new tag to this image
+     *
+     * @param tag - tag to add
+     */
+    fun addTag(tag: Tag) {
+        tags.add(tag.uuid)
+        tag.imageHashes.add(this.hash)
+    }
+
 
     companion object {
         /**
@@ -85,8 +97,6 @@ class ImageData(
                 this.path
             )
         }
-
-        
     }
 
     data class CameraInfo(

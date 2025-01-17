@@ -1,28 +1,30 @@
 package dev.su386.calina
 
-import dev.su386.calina.Calina.config
-import dev.su386.calina.Calina.CONFIG_PATH
-import dev.su386.calina.data.Database.getFile
-import dev.su386.calina.data.Database.readData
-import dev.su386.calina.data.Database.writeData
+import dev.su386.calina.Config.Companion.config
+import dev.su386.calina.Config.Companion.saveConfig
 import dev.su386.calina.images.ImageManager
+import dev.su386.calina.images.ImageManager.saveImageData
+import dev.su386.calina.images.Tag
+import dev.su386.calina.images.Tag.Companion.loadTags
+import dev.su386.calina.images.Tag.Companion.saveTags
+import java.util.*
 
 
 fun main() {
     println("Hello World!")
-
-    println(getFile(CONFIG_PATH)?.absolutePath)
+    loadTags()
 
     for (string in config.imageFolders) {
-        ImageManager.loadImages(string)
+        ImageManager.readImageData(string)
     }
 
-    ImageManager.writeDatabase("testDatabase.json")
-    writeData(CONFIG_PATH, config)
-}
+    val tag = Tag.tags[UUID.fromString("41b27d08-a801-42d0-a866-fd6b77b2aeca")]
 
-object Calina {
-    const val CONFIG_PATH: String = "config.json"
-    val config: Config = readData<Config>(CONFIG_PATH) ?: Config()
+    ImageManager.images.values.forEach {
+        it.addTag(tag ?: return@forEach)
+    }
 
+    saveConfig()
+    saveTags()
+    saveImageData()
 }

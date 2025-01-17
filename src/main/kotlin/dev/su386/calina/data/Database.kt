@@ -1,6 +1,7 @@
 package dev.su386.calina.data
 
 import com.google.gson.GsonBuilder
+import com.google.gson.reflect.TypeToken
 import java.io.File
 import java.nio.file.Files
 
@@ -23,13 +24,14 @@ object Database {
      * @return data at the database location of the instance T
      */
     inline fun <reified T> readData(path: String): T? {
+        val typeToken = object : TypeToken<T>() {}.type
         val content = cache.getOrPut(path) {
             val file = File("$PATH/${path.trim('/', '.')}")
             if (!file.exists()) return null
             file.bufferedReader().use { it.readText() }
         }
 
-        return gson.fromJson(content, T::class.java)
+        return gson.fromJson(content, typeToken)
     }
 
     /**
