@@ -8,6 +8,9 @@ import java.nio.file.Files
  * An object to manage and access the database
  */
 object Database {
+    /**
+     * @link https://docs.oracle.com/javase/tutorial/essential/environment/sysprop.html
+     */
     val PATH = "${System.getProperty("user.home")}/calina"
     val gson = GsonBuilder().setPrettyPrinting().create()
     val cache = mutableMapOf<String, String>()
