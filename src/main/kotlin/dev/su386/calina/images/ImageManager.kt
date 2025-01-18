@@ -21,7 +21,7 @@ object ImageManager {
      */
     fun readImageData(path: String) {
         File(path).walk()
-            .filter { !it.isDirectory && it.extension in acceptedFileTypes  && it.path !in loadedPaths  }
+            .filter { !it.isDirectory && it.extension.lowercase() in acceptedFileTypes  && it.path !in loadedPaths  }
             .forEach {
                 val newImage = it.toImageData()
                 registerImage(newImage)
