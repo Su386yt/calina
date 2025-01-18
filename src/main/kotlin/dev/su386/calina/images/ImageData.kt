@@ -1,10 +1,10 @@
-package dev.su386.calina.data
+package dev.su386.calina.images
 
 import com.drew.imaging.ImageMetadataReader
 import com.drew.metadata.exif.ExifImageDirectory
-import com.drew.metadata.exif.ExifSubIFDDirectory
 import com.drew.metadata.exif.ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL
 import com.drew.metadata.exif.GpsDirectory
+import com.google.gson.annotations.Expose
 import dev.su386.calina.utils.Location
 import java.awt.Image
 import java.io.File
@@ -13,39 +13,49 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.security.MessageDigest
 import java.util.*
 import javax.imageio.ImageIO
-import javax.imageio.plugins.tiff.ExifGPSTagSet.*
 
 class ImageData(
+    @Expose
     val location: Location,
+    @Expose
     val date: Long,
+    @Expose
     val hash: String,
+    @Expose
     val cameraInfo: CameraInfo,
-    val cachedPath: String
+    vararg paths: String
 ) {
-    /**
-     * Attempts to load the image at cachedPath.
-     * If the hash of image matches hash, returns the image
-     * Otherwise, null
-     */
-    val image: Image? get() {
-        val file = File(cachedPath)
-        val bytes = file.readBytes()
+    @Expose
+    var filePaths = paths as Array<String>
 
-        return if (file.exists() && bytes.hashSHA() == hash) {
-            try {
-                ImageIO.read(bytes.inputStream())
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
-            }
-        } else {
-            null
-        }
+    /**
+     * Returns an array of all valid images associated with this image data.
+     */
+    val images: Array<Image> get() {
+        return filePaths.mapNotNull { path ->
+                val file = File(path)
+                if (file.exists() && file.readBytes().hashSHA() == hash) {
+                    ImageIO.read(file)
+                } else {
+                    null
+                }
+            }.toTypedArray()
     }
 
-    val id: String get() = "$hash+$cachedPath"
-
     val dateTime: Date get() = Date(date)
+
+    @Expose(serialize = false, deserialize = false)
+    val tags: MutableSet<UUID> = mutableSetOf()
+
+    /**
+     * Adds a new tag to this image
+     *
+     * @param tag - tag to add
+     */
+    fun addTag(tag: Tag) {
+        tags.add(tag.uuid)
+        tag.imageHashes.add(this.hash)
+    }
 
     companion object {
         /**
@@ -62,14 +72,18 @@ class ImageData(
          * If no metadata exists in an image, it returns a metadata with default values.
          */
         fun File.toImageData(): ImageData {
-            val metadata = ImageMetadataReader.readMetadata(this)
+            val metadata = try {
+                ImageMetadataReader.readMetadata(this)
+            } catch (e: Exception) {
+                null
+            }
 
-            val gpsDirectory = metadata.getFirstDirectoryOfType(GpsDirectory::class.java)
+            val gpsDirectory = metadata?.getFirstDirectoryOfType(GpsDirectory::class.java)
             val location = gpsDirectory?.geoLocation?.let {
                 Location(it.latitude, it.longitude)
             } ?: Location.EMPTY
 
-            val exifData = metadata.getFirstDirectoryOfType(ExifImageDirectory::class.java)
+            val exifData = metadata?.getFirstDirectoryOfType(ExifImageDirectory::class.java)
             val time = exifData
                 ?.getDate(TAG_DATETIME_ORIGINAL)
                 ?.time
@@ -87,8 +101,6 @@ class ImageData(
                 this.path
             )
         }
-
-        
     }
 
     data class CameraInfo(
