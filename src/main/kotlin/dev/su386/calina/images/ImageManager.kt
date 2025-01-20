@@ -3,12 +3,14 @@ package dev.su386.calina.images
 import dev.su386.calina.data.Database.readData
 import dev.su386.calina.data.Database.writeData
 import dev.su386.calina.images.ImageData.Companion.toImageData
+import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers.IO
 import kotlin.collections.plus
 import java.io.File
 
 object ImageManager {
     private const val FILE_PATH = "/image/imagedata.json"
-    private val acceptedFileTypes = arrayOf("jpg", "jpeg", "png", "gif", "bmp", "tiff", "webp", "tif")
+    private val acceptedFileTypes = arrayOf("jpg", "jpeg", "png", "gif", "bmp", "tiff", "webp", "tif", "heic", "dng")
 
     val images: MutableMap<String, ImageData> = mutableMapOf()
     private val loadedPaths = mutableSetOf<String>()
@@ -20,12 +22,21 @@ object ImageManager {
      * @param path - Start directory (note: the method loads images recursively)
      */
     fun readImageData(path: String) {
-        File(path).walk()
-            .filter { it.extension.lowercase() in acceptedFileTypes && it.path !in loadedPaths  }
-            .forEach {
-                val newImage = it.toImageData()
-                registerImage(newImage)
-            }
+        runBlocking {
+            val coroutines = mutableSetOf<Deferred<Unit>>()
+            File(path).walk()
+                .filter { it.extension.lowercase() in acceptedFileTypes && it.path !in loadedPaths  }
+                .forEach {
+                    coroutines.add(
+                        async(IO) {
+                            val newImage = it.toImageData()
+                            registerImage(newImage)
+                        }
+                    )
+                }
+
+            coroutines.awaitAll()
+        }
 
     }
 

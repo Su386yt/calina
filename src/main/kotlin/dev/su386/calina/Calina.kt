@@ -11,6 +11,7 @@ import dev.su386.calina.images.Tag
 import dev.su386.calina.images.Tag.Companion.loadTags
 import dev.su386.calina.images.Tag.Companion.saveTags
 import java.util.*
+import java.util.concurrent.atomic.AtomicLong
 
 
 fun main() {
@@ -32,5 +33,9 @@ fun main() {
     saveConfig()
     saveTags()
 
-    println("Images loaded: ${ImageManager.images.size}")
+    println("Images loaded: ${ImageManager.images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
+}
+
+object Calina {
+    var bytesLoaded = AtomicLong(0)
 }

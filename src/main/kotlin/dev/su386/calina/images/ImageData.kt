@@ -5,6 +5,7 @@ import com.drew.metadata.exif.ExifImageDirectory
 import com.drew.metadata.exif.ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL
 import com.drew.metadata.exif.GpsDirectory
 import com.google.gson.annotations.Expose
+import dev.su386.calina.Calina
 import dev.su386.calina.utils.Location
 import java.awt.Image
 import java.io.File
@@ -71,8 +72,9 @@ class ImageData(
          * If no metadata exists in an image, it returns a metadata with default values.
          */
         fun File.toImageData(): ImageData {
+            val bytes = this.readBytes()
             val metadata = try {
-                ImageMetadataReader.readMetadata(this)
+                ImageMetadataReader.readMetadata(bytes.inputStream())
             } catch (e: Exception) {
                 null
             }
@@ -91,11 +93,13 @@ class ImageData(
                     ?.creationTime()
                     ?.toMillis()
                         ?: System.currentTimeMillis()
-            
+
+            Calina.bytesLoaded.addAndGet(bytes.size.toLong())
+
             return ImageData(
                 location,
                 time,
-                this.readBytes().hashSHA(),
+                bytes.hashSHA(),
                 CameraInfo(""),
                 this.path
             )
