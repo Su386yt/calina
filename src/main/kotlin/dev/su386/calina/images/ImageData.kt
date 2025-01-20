@@ -25,7 +25,6 @@ class ImageData(
     val cameraInfo: CameraInfo,
     vararg paths: String
 ) {
-    @Expose
     var filePaths = paths as Array<String>
 
     /**

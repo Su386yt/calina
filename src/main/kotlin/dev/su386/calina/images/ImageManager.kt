@@ -8,7 +8,7 @@ import java.io.File
 
 object ImageManager {
     private const val FILE_PATH = "/image/imagedata.json"
-    private val acceptedFileTypes = arrayOf("jpg", "jpeg", "png", "gif", "bmp", "tiff", "webp")
+    private val acceptedFileTypes = arrayOf("jpg", "jpeg", "png", "gif", "bmp", "tiff", "webp", "tif")
 
     val images: MutableMap<String, ImageData> = mutableMapOf()
     private val loadedPaths = mutableSetOf<String>()
@@ -21,11 +21,12 @@ object ImageManager {
      */
     fun readImageData(path: String) {
         File(path).walk()
-            .filter { !it.isDirectory && it.extension.lowercase() in acceptedFileTypes  && it.path !in loadedPaths  }
+            .filter { it.extension.lowercase() in acceptedFileTypes && it.path !in loadedPaths  }
             .forEach {
                 val newImage = it.toImageData()
                 registerImage(newImage)
             }
+
     }
 
     /**
