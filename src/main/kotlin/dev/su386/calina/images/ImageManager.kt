@@ -10,7 +10,7 @@ import java.io.File
 
 object ImageManager {
     private const val FILE_PATH = "/image/imagedata.json"
-    private val acceptedFileTypes = arrayOf("jpg", "jpeg", "png", "gif", "bmp", "tiff", "webp", "tif", "heic", "dng")
+    private val acceptedFileTypes = arrayOf("jpg", "jpeg", "png", "gif", "bmp", "tiff", "webp", "tif", "heic", "dng", "mp4", "avi", "mov")
 
     val images: MutableMap<String, ImageData> = mutableMapOf()
     private val loadedPaths = mutableSetOf<String>()
@@ -29,8 +29,13 @@ object ImageManager {
                 .forEach {
                     coroutines.add(
                         async(IO) {
-                            val newImage = it.toImageData()
-                            registerImage(newImage)
+                            try {
+                                val newImage = it.toImageData()
+                                registerImage(newImage)
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+
                         }
                     )
                 }
