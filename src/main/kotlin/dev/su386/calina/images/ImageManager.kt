@@ -10,7 +10,7 @@ import java.io.File
 
 object ImageManager {
     private const val FILE_PATH = "/image/imagedata.json"
-    private val acceptedFileTypes = arrayOf("jpg", "jpeg", "png", "gif", "bmp", "tiff", "webp", "tif", "heic", "dng", "mp4", "avi", "mov")
+    private val acceptedFileTypes = arrayOf("jpg", "jpeg", "png", "gif", "bmp", "tiff", "webp", "tif", "heic", "dng", "mp4", "avi", "mov", "arw")
 
     val images: MutableMap<String, ImageData> = mutableMapOf()
     private val loadedPaths = mutableSetOf<String>()
