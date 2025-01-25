@@ -24,7 +24,7 @@ object ImageManager {
     fun readImageData(path: String) {
         runBlocking {
             val coroutines = mutableSetOf<Deferred<Unit>>()
-            File(path).walk()
+            File(path).walkTopDown()
                 .filter { it.extension.lowercase() in acceptedFileTypes && it.path !in loadedPaths  }
                 .forEach {
                     coroutines.add(
