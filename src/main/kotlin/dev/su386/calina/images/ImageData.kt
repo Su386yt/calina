@@ -4,7 +4,9 @@ import com.drew.imaging.ImageMetadataReader
 import com.drew.metadata.exif.ExifImageDirectory
 import com.drew.metadata.exif.ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL
 import com.drew.metadata.exif.GpsDirectory
-import com.google.gson.annotations.Expose
+import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonProperty
 import dev.su386.calina.Calina
 import dev.su386.calina.utils.Location
 import kotlinx.coroutines.*
@@ -18,22 +20,22 @@ import java.security.MessageDigest
 import java.util.*
 import javax.imageio.ImageIO
 
-class ImageData(
-    @Expose
+class ImageData @JsonCreator constructor(
+    @JsonProperty("location")
     val location: Location,
-    @Expose
+    @JsonProperty("date")
     val date: Long,
-    @Expose
+    @JsonProperty("hash")
     val hash: String,
-    @Expose
+    @JsonProperty("cameraInfo")
     val cameraInfo: CameraInfo,
-    vararg paths: String
+    @JsonProperty("filePaths")
+    vararg var filePaths: String
 ) {
-    var filePaths = paths as Array<String>
-
     /**
      * Returns an array of all valid images associated with this image data.
      */
+    @get:JsonIgnore
     val images: Array<Image> get() {
         return filePaths.mapNotNull { path ->
             val file = File(path)
@@ -46,9 +48,10 @@ class ImageData(
         }.toTypedArray()
     }
 
+    @get:JsonIgnore
     val dateTime: Date get() = Date(date)
 
-    @Expose(serialize = false, deserialize = false)
+    @JsonIgnore
     val tags: MutableSet<UUID> = mutableSetOf()
 
     /**
@@ -152,7 +155,7 @@ class ImageData(
         }
     }
 
-    data class CameraInfo(
-        val name: String
+    data class CameraInfo @JsonCreator constructor(
+        @JsonProperty("name") val name: String
     )
 }

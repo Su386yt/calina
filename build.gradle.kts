@@ -1,7 +1,7 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
-    kotlin("jvm")
+    kotlin("jvm") version "2.1.10"
     id("org.jetbrains.compose")
     id("org.jetbrains.kotlin.plugin.compose")
 }
@@ -22,9 +22,9 @@ dependencies {
     // With compose.desktop.common you will also lose @Preview functionality
     implementation(compose.desktop.currentOs)
     testImplementation(kotlin("test"))
-    implementation("com.google.code.gson:gson:2.11.0")
     implementation("com.drewnoakes:metadata-extractor:2.18.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.+")
 }
 
 compose.desktop {

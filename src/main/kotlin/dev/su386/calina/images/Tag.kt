@@ -1,17 +1,14 @@
 package dev.su386.calina.images
 
-import com.google.gson.annotations.Expose
+import com.fasterxml.jackson.annotation.JsonIgnore
 import dev.su386.calina.data.Database.readData
 import dev.su386.calina.data.Database.writeData
-import java.util.UUID
+import java.util.*
 
 class Tag(
-    @Expose
     val name: String,
 ) {
-    @Expose
     val uuid = UUID.randomUUID()
-    @Expose
     val imageHashes: MutableSet<String> = mutableSetOf()
 
     init {
@@ -19,6 +16,7 @@ class Tag(
     }
 
     companion object {
+        @JsonIgnore
         val tags = mutableMapOf<UUID, Tag>()
 
         /**
@@ -27,7 +25,7 @@ class Tag(
          * @see dev.su386.calina.data.Database.writeData
          */
         fun saveTags() {
-            writeData("tags/tags.json", tags.values, true)
+            writeData("tags/tags.json", tags.values)
         }
 
         /**
@@ -36,7 +34,7 @@ class Tag(
          * @see dev.su386.calina.data.Database.readData
          */
         fun loadTags() {
-            readData<MutableCollection<Tag>>("tags/tags.json", true)
+            readData<MutableCollection<Tag>>("tags/tags.json")
                 ?.associateBy { it.uuid }
                 ?.let { tags.putAll(it) }
         }
