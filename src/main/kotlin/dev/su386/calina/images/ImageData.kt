@@ -5,9 +5,13 @@ import com.drew.metadata.exif.ExifImageDirectory
 import com.drew.metadata.exif.ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL
 import com.drew.metadata.exif.GpsDirectory
 import com.google.gson.annotations.Expose
+import dev.su386.calina.Calina
 import dev.su386.calina.utils.Location
+import kotlinx.coroutines.*
 import java.awt.Image
 import java.io.File
+import java.io.FileInputStream
+import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.attribute.BasicFileAttributes
 import java.security.MessageDigest
@@ -25,7 +29,6 @@ class ImageData(
     val cameraInfo: CameraInfo,
     vararg paths: String
 ) {
-    @Expose
     var filePaths = paths as Array<String>
 
     /**
@@ -33,13 +36,14 @@ class ImageData(
      */
     val images: Array<Image> get() {
         return filePaths.mapNotNull { path ->
-                val file = File(path)
-                if (file.exists() && file.readBytes().hashSHA() == hash) {
-                    ImageIO.read(file)
-                } else {
-                    null
-                }
-            }.toTypedArray()
+            val file = File(path)
+            val fileHash = runBlocking { file.inputStream().parallelSHA256() }
+            if (file.exists() && fileHash == hash) {
+                ImageIO.read(file)
+            } else {
+                null
+            }
+        }.toTypedArray()
     }
 
     val dateTime: Date get() = Date(date)
@@ -61,43 +65,88 @@ class ImageData(
         /**
          * Returns an SHA-256 hash of the byte array
          */
-        fun ByteArray.hashSHA() : String{
-            val md = MessageDigest.getInstance("SHA-256")
-            val bytes =  md.digest(this)
-            return Base64.getUrlEncoder().encodeToString(bytes)
+        suspend fun FileInputStream.parallelSHA256(): String {
+            val chunkSize = 1024L * 1024L // 1 MB chunks
+            val digest = MessageDigest.getInstance("SHA-256")
+
+            return withContext(Dispatchers.IO) {
+                val channel = this@parallelSHA256.channel
+                val fileSize = channel.size()
+
+                // Launch coroutines for chunks
+                (0 until fileSize step chunkSize).map { start ->
+                    async {
+                        val size = minOf(chunkSize, fileSize - start).toInt() // Cast to Int
+                        val buffer = ByteArray(size)
+                        val byteBuffer = ByteBuffer.wrap(buffer)
+
+                        // Reading into ByteBuffer instead of ByteArray
+                        channel.position(start).read(byteBuffer)
+
+                        // Updating the digest in a thread-safe way
+                        synchronized(digest) {
+                            digest.update(buffer)
+                        }
+                    }
+                }.awaitAll()
+
+                // Finalize the hash
+                digest.digest().joinToString("") { "%02x".format(it) }
+            }
         }
 
         /**
          * Returns the image data at that path.
          * If no metadata exists in an image, it returns a metadata with default values.
+         *
+         * Make sure to use Dispatchers.IO
          */
-        fun File.toImageData(): ImageData {
-            val metadata = try {
-                ImageMetadataReader.readMetadata(this)
-            } catch (e: Exception) {
-                null
+        suspend fun File.toImageData(): ImageData {
+            // Open the InputStream and read metadata in a background IO context
+            val inputStream = this.inputStream()
+
+            val metadata = withContext(Dispatchers.IO) {
+                try {
+                    ImageMetadataReader.readMetadata(inputStream)
+                } catch (e: Exception) {
+                    null
+                }
             }
 
+            // Extract GPS and EXIF data (using the metadata)
             val gpsDirectory = metadata?.getFirstDirectoryOfType(GpsDirectory::class.java)
             val location = gpsDirectory?.geoLocation?.let {
                 Location(it.latitude, it.longitude)
             } ?: Location.EMPTY
 
             val exifData = metadata?.getFirstDirectoryOfType(ExifImageDirectory::class.java)
-            val time = exifData
-                ?.getDate(TAG_DATETIME_ORIGINAL)
-                ?.time
-                ?: Files
-                    .readAttributes(this.toPath(), BasicFileAttributes::class.java)
-                    ?.creationTime()
-                    ?.toMillis()
-                        ?: System.currentTimeMillis()
-            
+            val time = withContext(Dispatchers.IO) {
+                exifData?.getDate(TAG_DATETIME_ORIGINAL)
+                    ?.time
+                    ?: Files
+                        .readAttributes(this@toImageData.toPath(), BasicFileAttributes::class.java)
+                        ?.creationTime()
+                        ?.toMillis()
+                            ?: System.currentTimeMillis()
+            }
+
+
+            // Update bytesLoaded in a thread-safe manner
+            Calina.bytesLoaded.addAndGet(this.length())
+
+            // Call the parallelSHA256 suspending function to compute the hash (ensure it's called within a coroutine)
+            val hash = withContext(Dispatchers.IO) {
+                inputStream.use { stream ->
+                    stream.parallelSHA256()
+                }
+            }
+
+            // Return the ImageData object with all the necessary information
             return ImageData(
                 location,
                 time,
-                this.readBytes().hashSHA(),
-                CameraInfo(""),
+                hash,
+                CameraInfo(""),  // Placeholder for CameraInfo, you might want to extract this from metadata
                 this.path
             )
         }

@@ -29,18 +29,17 @@ object Database {
         respectExposeAnnotations: Boolean = false
     ): T? {
         val typeToken = object : TypeToken<T>() {}.type
-        val content = cache.getOrPut(path) {
-            val file = File("$PATH/${path.trim('/', '.')}")
-            if (!file.exists()) return null
-            file.bufferedReader().use { it.readText() }
+        if (path in cache) {
+            return if (respectExposeAnnotations) {
+                exposeGson.fromJson(cache[path], typeToken)
+            } else {
+                gson.fromJson(cache[path], typeToken)
+            }
         }
 
-
-        return if (respectExposeAnnotations) {
-            exposeGson.fromJson(content, typeToken)
-        } else {
-            gson.fromJson(content, typeToken)
-        }
+        val file = File("$PATH/${path.trim('/', '.')}")
+        if (!file.exists()) return null
+        file.bufferedReader().use { return if (respectExposeAnnotations) exposeGson.fromJson(it, typeToken) else gson.fromJson(it, typeToken) }
     }
 
     /**
