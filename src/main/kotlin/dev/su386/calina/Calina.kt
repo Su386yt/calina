@@ -1,39 +1,70 @@
 package dev.su386.calina
 
+import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.material.Button
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.application
 import dev.su386.calina.Config.Companion.config
 import dev.su386.calina.Config.Companion.saveConfig
-import dev.su386.calina.data.Database
 import dev.su386.calina.images.ImageManager
 import dev.su386.calina.images.ImageManager.loadImageData
 import dev.su386.calina.images.ImageManager.readImageData
 import dev.su386.calina.images.ImageManager.saveImageData
-import dev.su386.calina.images.Tag
-import dev.su386.calina.images.Tag.Companion.loadTags
 import dev.su386.calina.images.Tag.Companion.saveTags
+import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers.IO
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 
 
-fun main() {
-    println("Hello World!")
-    loadTags()
-    loadImageData()
+@Composable
+@Preview
+fun App() {
+    var text by remember { mutableStateOf("Hello, World!") }
 
-    for (string in config.imageFolders) {
-        readImageData(string)
+    MaterialTheme {
+        Button(onClick = {
+            text = "Hello, Desktop!"
+        }) {
+            Text(text)
+        }
     }
+}
 
-    Tag.tags[UUID.fromString("41b27d08-a801-42d0-a866-fd6b77b2aeca")]?.let { tag ->
-        ImageManager.images.values.forEach {
-            it.addTag(tag)
+
+fun main() {
+    return runBlocking {
+        async(IO) {
+            println("Hello World!")
+            println("Read all tags")
+            loadImageData()
+            println("Images loaded: ${ImageManager.images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
+
+            println("Read all data")
+
+            for (string in config.imageFolders) {
+                readImageData(string)
+            }
+            println("Read all images")
+
+            saveImageData()
+            saveConfig()
+            saveTags()
+            println("Images loaded: ${ImageManager.images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
+        }.start()
+
+        return@runBlocking application {
+            Window(onCloseRequest = ::exitApplication) {
+                App()
+            }
         }
     }
 
-    saveImageData()
-    saveConfig()
-    saveTags()
 
-    println("Images loaded: ${ImageManager.images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
+
 }
 
 object Calina {

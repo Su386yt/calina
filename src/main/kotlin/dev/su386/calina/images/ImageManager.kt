@@ -24,14 +24,18 @@ object ImageManager {
     fun readImageData(path: String) {
         runBlocking {
             val coroutines = mutableSetOf<Deferred<Unit>>()
-            File(path).walkTopDown()
+            val walk = File(path).walkTopDown()
                 .filter { it.extension.lowercase() in acceptedFileTypes && it.path !in loadedPaths  }
-                .forEach {
+            var i = 0
+            val count = walk.count()
+            walk.forEach {
                     coroutines.add(
                         async(IO) {
                             try {
                                 val newImage = it.toImageData()
                                 registerImage(newImage)
+                                i++
+                                println("Image: $i/$count (${i*100/count})")
                             } catch (e: Exception) {
                                 e.printStackTrace()
                             }
