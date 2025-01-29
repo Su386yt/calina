@@ -8,6 +8,7 @@ data class Location @JsonCreator constructor(
     @JsonProperty("latitude") val latitude: Double,
     @JsonProperty("longitude") val longitude: Double
 ) {
+    @JsonProperty("emptyLocation")
     private var emptyLocation = false
 
     companion object {
