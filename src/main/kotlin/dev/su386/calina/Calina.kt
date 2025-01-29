@@ -53,11 +53,11 @@ fun main() {
             println("Images loaded: ${ImageManager.images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
         }.start()
 
-//        return@runBlocking application {
-//            Window(onCloseRequest = ::exitApplication) {
-//                App()
-//            }
-//        }
+        return@runBlocking application {
+            Window(onCloseRequest = ::exitApplication) {
+                App()
+            }
+        }
     }
 
 
