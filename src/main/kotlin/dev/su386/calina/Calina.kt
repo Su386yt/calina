@@ -5,6 +5,8 @@ import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.application
 import dev.su386.calina.Config.Companion.config
 import dev.su386.calina.Config.Companion.saveConfig
 import dev.su386.calina.images.ImageManager
