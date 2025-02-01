@@ -1,7 +1,10 @@
 package dev.su386.calina.data
 
-import com.google.gson.GsonBuilder
-import com.google.gson.reflect.TypeToken
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.core.util.DefaultIndenter
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import java.io.File
 import java.nio.file.Files
 
@@ -13,10 +16,13 @@ object Database {
      * @link https://docs.oracle.com/javase/tutorial/essential/environment/sysprop.html
      */
     val PATH = "${System.getProperty("user.home")}/calina"
-    val exposeGson = GsonBuilder().excludeFieldsWithoutExposeAnnotation().setPrettyPrinting().create()
-    val gson = GsonBuilder().setPrettyPrinting().create()
-    val cache = mutableMapOf<String, String>()
-
+    val JSON = jacksonObjectMapper().apply {
+        registerKotlinModule()
+        setDefaultPrettyPrinter(DefaultPrettyPrinter().apply {
+            indentArraysWith(DefaultIndenter("  ", "\n"))
+            indentObjectsWith(DefaultIndenter("  ", "\n"))
+        })
+    }
     /**
      * Access data from the database
      *
@@ -26,20 +32,10 @@ object Database {
      */
     inline fun <reified T> readData(
         path: String,
-        respectExposeAnnotations: Boolean = false
     ): T? {
-        val typeToken = object : TypeToken<T>() {}.type
-        if (path in cache) {
-            return if (respectExposeAnnotations) {
-                exposeGson.fromJson(cache[path], typeToken)
-            } else {
-                gson.fromJson(cache[path], typeToken)
-            }
-        }
-
         val file = File("$PATH/${path.trim('/', '.')}")
         if (!file.exists()) return null
-        file.bufferedReader().use { return if (respectExposeAnnotations) exposeGson.fromJson(it, typeToken) else gson.fromJson(it, typeToken) }
+        return JSON.readValue(file, object : TypeReference<T>() {})
     }
 
     /**
@@ -48,19 +44,14 @@ object Database {
      * @param path - Local path within database
      * @param data - Data to be stored in the database
      */
-    fun writeData(path: String, data: Any, respectExposeAnnotations: Boolean = false) {
+
+    fun writeData(path: String, data: Any) {
         val file = File("$PATH/${path.trim('/', '.')}")
         Files.createDirectories(file.toPath().parent)
         file.createNewFile()
         file.setWritable(true)
-        val string = if (respectExposeAnnotations) {
-            exposeGson.toJson(data)
-        } else {
-            gson.toJson(data)
-        }
-        file.bufferedWriter().use { it.write(string) }
 
-        cache[path] = string
+        JSON.writerWithDefaultPrettyPrinter().writeValue(file, data)
     }
 
     /**

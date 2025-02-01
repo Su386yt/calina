@@ -14,9 +14,9 @@ import dev.su386.calina.images.ImageManager.loadImageData
 import dev.su386.calina.images.ImageManager.readImageData
 import dev.su386.calina.images.ImageManager.saveImageData
 import dev.su386.calina.images.Tag.Companion.saveTags
-import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
-import java.util.*
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.atomic.AtomicLong
 
 
@@ -39,7 +39,6 @@ fun main() {
     return runBlocking {
         async(IO) {
             println("Hello World!")
-            println("Read all tags")
             loadImageData()
             println("Images loaded: ${ImageManager.images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
 

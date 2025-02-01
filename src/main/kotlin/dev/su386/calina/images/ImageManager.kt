@@ -10,7 +10,7 @@ import java.io.File
 
 object ImageManager {
     private const val FILE_PATH = "/image/imagedata.json"
-    private val acceptedFileTypes = arrayOf("jpg", "jpeg", "png", "gif", "bmp", "tiff", "webp", "tif", "heic", "dng", "mp4", "avi", "mov", "arw")
+    private val acceptedFileTypes = arrayOf("jpg", "jpeg", "png", "gif", "bmp", "tiff", "webp", "tif", "heic", "mp4", "avi", "mov", "dng","arw")
 
     val images: MutableMap<String, ImageData> = mutableMapOf()
     private val loadedPaths = mutableSetOf<String>()
@@ -55,9 +55,11 @@ object ImageManager {
      *
      * @param imageData - Image to be loaded into
      */
-    private fun registerImage(imageData: ImageData) {
+    private fun registerImage(imageData: ImageData?) {
+        imageData ?: return
+
         if (imageData.hash in images) {
-            images[imageData.hash]?.let { it.filePaths += imageData.filePaths }
+            images[imageData.hash]?.let { it.filePaths = it.filePaths as Array<String> + imageData.filePaths }
             return
         }
 
@@ -77,7 +79,7 @@ object ImageManager {
      * @see dev.su386.calina.data.Database.readData
      */
     fun loadImageData() {
-        val imageSet = readData<MutableSet<ImageData>>(this.FILE_PATH) ?: return
+        val imageSet = readData<MutableSet<ImageData>>(this.FILE_PATH) ?: mutableSetOf()
 
         for (image in imageSet){
             registerImage(image)
@@ -90,6 +92,6 @@ object ImageManager {
      * @see dev.su386.calina.data.Database.writeData
      */
     fun saveImageData(){
-        writeData(this.FILE_PATH, images.values)
+        writeData(this.FILE_PATH, images.values.toList())
     }
 }
