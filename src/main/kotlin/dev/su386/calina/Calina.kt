@@ -36,7 +36,7 @@ fun App() {
 
 
 fun main() {
-        return runBlocking {
+    return runBlocking {
         async(IO) {
             try {
                 println("Hello World!")
@@ -68,9 +68,6 @@ fun main() {
             }
         }
     }
-
-
-
 }
 
 object Calina {
