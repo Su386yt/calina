@@ -7,10 +7,17 @@ import dev.su386.calina.config.StringList
 import dev.su386.calina.data.Database
 
 object CalinaConfig: Config("Calina", "") {
-    private const val path = "config.json"
+    private const val PATH = "config.json"
 
     init {
-        this["gallery/imagePaths"] = StringList("Image Paths", "Paths for which to look for images")
+        this.register(
+            path = "gallery/imagePaths",
+            option = StringList(
+                name = "Image Paths",
+                description = "Paths for which to look for images"
+            ),
+            "imageFolders" // Backwards compatibility from the previous config library
+        )
         this["gallery"].name = "Gallery"
     }
 
@@ -20,7 +27,7 @@ object CalinaConfig: Config("Calina", "") {
     }
 
     fun load() {
-        val data = Database.readData<JsonNode>(path) ?: return
+        val data = Database.readData<JsonNode>(PATH) ?: return
         super.loadFromJson(data)
     }
 
@@ -31,7 +38,7 @@ object CalinaConfig: Config("Calina", "") {
     }
 
     fun save() {
-        Database.writeData("test", super.saveToJson())
+        Database.writeData(PATH, super.saveToJson())
     }
 
 
