@@ -36,8 +36,8 @@ fun App() {
 
 
 fun main() {
-//        return runBlocking {
-//        async(IO) {
+        return runBlocking {
+        async(IO) {
             try {
                 println("Hello World!")
                 CalinaConfig.load()
@@ -60,14 +60,14 @@ fun main() {
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-//        }.start()
-//
-//        return@runBlocking application {
-//            Window(onCloseRequest = ::exitApplication) {
-//                App()
-//            }
-//        }
-//    }
+        }.start()
+
+        return@runBlocking application {
+            Window(onCloseRequest = ::exitApplication) {
+                App()
+            }
+        }
+    }
 
 
 
