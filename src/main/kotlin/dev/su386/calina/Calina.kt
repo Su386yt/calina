@@ -14,9 +14,6 @@ import dev.su386.calina.images.ImageManager.loadImageData
 import dev.su386.calina.images.ImageManager.readImageData
 import dev.su386.calina.images.ImageManager.saveImageData
 import dev.su386.calina.images.Tag.Companion.saveTags
-import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
 import java.util.concurrent.atomic.AtomicLong
 
 

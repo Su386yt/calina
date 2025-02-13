@@ -2,9 +2,7 @@ package dev.su386.calina.images
 
 import com.drew.imaging.ImageMetadataReader
 import com.drew.metadata.exif.ExifIFD0Directory
-import com.drew.metadata.exif.ExifImageDirectory
 import com.drew.metadata.exif.ExifSubIFDDirectory
-import com.drew.metadata.exif.ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL
 import com.drew.metadata.exif.GpsDirectory
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -16,11 +14,9 @@ import kotlinx.coroutines.*
 import java.awt.Image
 import java.io.File
 import java.io.FileInputStream
-import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.attribute.BasicFileAttributes
-import java.security.DigestInputStream
 import java.security.MessageDigest
 import java.util.*
 import javax.imageio.ImageIO
