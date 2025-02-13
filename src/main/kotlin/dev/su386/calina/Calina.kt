@@ -41,7 +41,6 @@ fun main() {
             println("Hello World!")
             loadImageData()
             println("Images loaded: ${ImageManager.images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
-
             println("Read all data")
 
             for (string in config.imageFolders) {
@@ -61,9 +60,6 @@ fun main() {
             }
         }
     }
-
-
-
 }
 
 object Calina {
