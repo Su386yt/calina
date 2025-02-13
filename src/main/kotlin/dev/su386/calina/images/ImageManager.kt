@@ -3,16 +3,23 @@ package dev.su386.calina.images
 import dev.su386.calina.data.Database.readData
 import dev.su386.calina.data.Database.writeData
 import dev.su386.calina.images.ImageData.Companion.toImageData
-import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
-import kotlin.collections.plus
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flatMapMerge
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 
 object ImageManager {
     private const val FILE_PATH = "/image/imagedata.json"
     private val acceptedFileTypes = arrayOf("jpg", "jpeg", "png", "gif", "bmp", "tiff", "webp", "tif", "heic", "mp4", "avi", "mov", "dng","arw")
 
-    val images: MutableMap<String, ImageData> = mutableMapOf()
+    val images: MutableMap<String, ImageData> = ConcurrentHashMap()
     private val loadedPaths = mutableSetOf<String>()
 
     /**
@@ -21,32 +28,37 @@ object ImageManager {
      *
      * @param path - Start directory (note: the method loads images recursively)
      */
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun readImageData(path: String) {
         runBlocking {
-            val coroutines = mutableSetOf<Deferred<Unit>>()
-            val walk = File(path).walkTopDown()
-                .filter { it.extension.lowercase() in acceptedFileTypes && it.path !in loadedPaths  }
-            var i = 0
-            val count = walk.count()
-            walk.forEach {
-                    coroutines.add(
-                        async(IO) {
-                            try {
-                                val newImage = it.toImageData()
-                                registerImage(newImage)
-                                i++
-                                println("Image: $i/$count (${i*100/count})")
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                            }
+            val count = AtomicInteger(0)
+            val totalFiles = AtomicInteger(0)
 
-                        }
-                    )
+            File(path).walkTopDown()
+                .filter { file ->
+                    file.extension.lowercase() in acceptedFileTypes && file.path !in loadedPaths
                 }
+                .onEach { totalFiles.incrementAndGet() } // Count files on-the-fly
+                .asFlow()
+                .flatMapMerge(concurrency = Runtime.getRuntime().availableProcessors()) { file ->
+                    flow {
+                        try {
+                            val newImage = withContext(IO) { file.toImageData() }
+                            registerImage(newImage)
+                            val processed = count.incrementAndGet()
 
-            coroutines.awaitAll()
+                            // Update progress less frequently to reduce I/O overhead
+                            if (processed % 100 == 0 || processed == totalFiles.get()) {
+                                println("Image: $processed/${totalFiles.get()} (${processed * 100 / totalFiles.get()}%)")
+                            }
+                            emit(Unit)
+                        } catch (e: Exception) {
+                            println("Error processing file ${file.path}: ${e.message}")
+                        }
+                    }
+                }
+                .collect()
         }
-
     }
 
     /**
