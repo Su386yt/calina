@@ -14,9 +14,6 @@ import dev.su386.calina.images.ImageManager.loadImageData
 import dev.su386.calina.images.ImageManager.readImageData
 import dev.su386.calina.images.ImageManager.saveImageData
 import dev.su386.calina.images.Tag.Companion.saveTags
-import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
 import java.util.concurrent.atomic.AtomicLong
 
 
@@ -36,34 +33,27 @@ fun App() {
 
 
 fun main() {
-    return runBlocking {
-        async(IO) {
-            println("Hello World!")
-            loadImageData()
-            println("Images loaded: ${ImageManager.images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
+    println("Hello World!")
+    loadImageData()
+    println("Images loaded: ${ImageManager.images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
+    println("Read all data")
 
-            println("Read all data")
+    for (string in config.imageFolders) {
+        readImageData(string)
+    }
+    println("Read all images")
 
-            for (string in config.imageFolders) {
-                readImageData(string)
-            }
-            println("Read all images")
+    saveImageData()
+    println("Saving data")
+    saveConfig()
+    saveTags()
+    println("Images loaded: ${ImageManager.images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
 
-            saveImageData()
-            saveConfig()
-            saveTags()
-            println("Images loaded: ${ImageManager.images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
-        }.start()
-
-        return@runBlocking application {
-            Window(onCloseRequest = ::exitApplication) {
-                App()
-            }
+    return application {
+        Window(onCloseRequest = ::exitApplication) {
+            App()
         }
     }
-
-
-
 }
 
 object Calina {
