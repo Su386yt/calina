@@ -1,6 +1,5 @@
 package dev.su386.calina
 
-import androidx.compose.material.Colors
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.darkColors
 import androidx.compose.runtime.Composable
@@ -8,8 +7,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import dev.su386.calina.Config.Companion.config
-import dev.su386.calina.Config.Companion.saveConfig
 import dev.su386.calina.app.App
 import dev.su386.calina.images.ImageManager
 import dev.su386.calina.images.ImageManager.loadImageData
@@ -24,7 +21,6 @@ import java.util.concurrent.atomic.AtomicLong
 
 
 @OptIn(DelicateCoroutinesApi::class)
-
 @Composable
 fun CalinaTheme(content: @Composable () -> Unit) {
     val colors = remember {
@@ -55,16 +51,17 @@ fun main() {
     GlobalScope.launch(IO) {
         println("Hello World!")
         loadImageData()
+        CalinaConfig.load()
         println("Images loaded: ${ImageManager.images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
 
         println("Read all data")
-        for (string in config.imageFolders) {
+        for (string in CalinaConfig.get<List<String>>("gallery/imagePaths")) {
             readImageData(string)
         }
         println("Read all images")
 
         saveImageData()
-        saveConfig()
+        CalinaConfig.save()
         saveTags()
         println("Images loaded: ${ImageManager.images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
     }
