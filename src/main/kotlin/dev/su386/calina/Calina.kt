@@ -7,8 +7,8 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import dev.su386.calina.Config.Companion.config
-import dev.su386.calina.Config.Companion.saveConfig
+import com.fasterxml.jackson.databind.JsonNode
+import dev.su386.calina.data.Database
 import dev.su386.calina.images.ImageManager
 import dev.su386.calina.images.ImageManager.loadImageData
 import dev.su386.calina.images.ImageManager.readImageData
@@ -38,21 +38,28 @@ fun App() {
 fun main() {
     return runBlocking {
         async(IO) {
-            println("Hello World!")
-            loadImageData()
-            println("Images loaded: ${ImageManager.images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
+            try {
+                println("Hello World!")
+                CalinaConfig.load()
+                println("Loaded config")
+                loadImageData()
+                println("Images loaded: ${ImageManager.images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
 
-            println("Read all data")
+                println("Read all data")
 
-            for (string in config.imageFolders) {
-                readImageData(string)
+                for (string in CalinaConfig.get<List<String>>("gallery/imagePaths")) {
+                    readImageData(string)
+                }
+                println("Read all images")
+
+                saveImageData()
+                println("Saved image data")
+                CalinaConfig.save()
+                saveTags()
+                println("Images loaded: ${ImageManager.images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
-            println("Read all images")
-
-            saveImageData()
-            saveConfig()
-            saveTags()
-            println("Images loaded: ${ImageManager.images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
         }.start()
 
         return@runBlocking application {
@@ -61,9 +68,6 @@ fun main() {
             }
         }
     }
-
-
-
 }
 
 object Calina {
