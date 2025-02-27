@@ -35,17 +35,20 @@ fun App() {
 fun main() {
     println("Hello World!")
     loadImageData()
+    CalinaConfig.load()
+
     println("Images loaded: ${ImageManager.images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
     println("Read all data")
 
-    for (string in config.imageFolders) {
+    for (string in CalinaConfig.get<List<String>>("gallery/imagePaths")) {
         readImageData(string)
     }
+    
     println("Read all images")
 
     saveImageData()
     println("Saving data")
-    saveConfig()
+    CalinaConfig.save()
     saveTags()
     println("Images loaded: ${ImageManager.images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
 
