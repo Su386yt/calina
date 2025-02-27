@@ -7,8 +7,8 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import dev.su386.calina.Config.Companion.config
-import dev.su386.calina.Config.Companion.saveConfig
+import com.fasterxml.jackson.databind.JsonNode
+import dev.su386.calina.data.Database
 import dev.su386.calina.images.ImageManager
 import dev.su386.calina.images.ImageManager.loadImageData
 import dev.su386.calina.images.ImageManager.readImageData

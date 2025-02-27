@@ -104,6 +104,6 @@ object ImageManager {
      * @see dev.su386.calina.data.Database.writeData
      */
     fun saveImageData(){
-        writeData(this.FILE_PATH, images.values.toList())
+        writeData(this.FILE_PATH, images.values.toTypedArray())
     }
 }
