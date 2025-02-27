@@ -14,6 +14,10 @@ import dev.su386.calina.images.ImageManager.loadImageData
 import dev.su386.calina.images.ImageManager.readImageData
 import dev.su386.calina.images.ImageManager.saveImageData
 import dev.su386.calina.images.Tag.Companion.saveTags
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicLong
 
 
@@ -32,29 +36,33 @@ fun App() {
 }
 
 
+@OptIn(DelicateCoroutinesApi::class)
 fun main() {
-    println("Hello World!")
-    loadImageData()
-    CalinaConfig.load()
+    // Launch background tasks in a non-blocking coroutine
+    GlobalScope.launch(IO) {
+        println("Hello World!")
+        loadImageData()
+        CalinaConfig.load()
+        println("Images loaded: ${ImageManager.images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
 
-    println("Images loaded: ${ImageManager.images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
-    println("Read all data")
+        println("Read all data")
+        for (string in CalinaConfig.get<List<String>>("gallery/imagePaths")) {
+            readImageData(string)
+        }
+        println("Read all images")
 
-    for (string in CalinaConfig.get<List<String>>("gallery/imagePaths")) {
-        readImageData(string)
+        saveImageData()
+        CalinaConfig.save()
+        saveTags()
+        println("Images loaded: ${ImageManager.images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
     }
-    
-    println("Read all images")
 
-    saveImageData()
-    println("Saving data")
-    CalinaConfig.save()
-    saveTags()
-    println("Images loaded: ${ImageManager.images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
-
-    return application {
+    // Now start the UI without blocking the background tasks
+    application {
         Window(onCloseRequest = ::exitApplication) {
-            App()
+            MaterialTheme {
+                App()
+            }
         }
     }
 }
