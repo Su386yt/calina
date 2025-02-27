@@ -1,5 +1,6 @@
 package dev.su386.calina.config
 
+import androidx.compose.runtime.Composable
 import com.fasterxml.jackson.databind.JsonNode
 
 /**
@@ -8,7 +9,8 @@ import com.fasterxml.jackson.databind.JsonNode
  */
 abstract class ConfigOption(
     var name: String,
-    var description: String
+    var description: String,
+    val size: Float = 1f
 ) {
     /**
      * The state of the config option
@@ -24,6 +26,9 @@ abstract class ConfigOption(
     fun <T> value(): T {
         return value as T
     }
+
+    @Composable
+    abstract fun getComposable()
 
     /**
      * @param jsonNode

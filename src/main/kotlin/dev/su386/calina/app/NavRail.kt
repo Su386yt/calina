@@ -11,18 +11,23 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
 import dev.su386.calina.Calina
 import dev.su386.calina.CalinaTheme
 import dev.su386.calina.utils.AutoResizeText
 
 
 @Composable
-fun NavRail(activeIndex: MutableState<Int>, vararg iconsData: NavRailIconData) {
+fun NavRail(modifier: Modifier = Modifier, activeIndex: MutableState<Int>, vararg iconsData: NavRailIconData) {
     Column (
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = modifier
+            .clip(RoundedCornerShape(7.dp))
+            .fillMaxWidth()
+            .fillMaxHeight()
+            .background(MaterialTheme.colors.surface),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -31,9 +36,9 @@ fun NavRail(activeIndex: MutableState<Int>, vararg iconsData: NavRailIconData) {
                 name = iconData.name,
                 icon = iconData.icon,
                 selected = iconData.active,
-                backgroundColor = MaterialTheme.colors.secondary,
+                backgroundColor = MaterialTheme.colors.surface,
                 activeColor = MaterialTheme.colors.secondary,
-                textColor = MaterialTheme.colors.onSecondary,
+                textColor = MaterialTheme.colors.onBackground,
                 onClick = iconData.onClick
             )
 
@@ -56,7 +61,7 @@ fun NavRailIcon (
         Box(
             Modifier
                 .aspectRatio(1f)
-                .fillMaxSize()
+                .fillMaxSize(.9f)
                 .background(
                     color = backgroundColor,
                     shape = RoundedCornerShape(10)

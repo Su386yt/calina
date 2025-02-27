@@ -16,11 +16,12 @@ import androidx.compose.ui.text.style.TextOverflow
 fun AutoResizeText(
     text: String,
     modifier: Modifier = Modifier,
-    color: Color = Color.Unspecified
+    color: Color = Color.Unspecified,
+    align: Alignment = Alignment.Center
 ) {
     BoxWithConstraints(
         modifier = modifier,
-        contentAlignment = Alignment.Center,
+        contentAlignment = align,
     ) {
         val density = LocalDensity.current
 

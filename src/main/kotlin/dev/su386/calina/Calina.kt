@@ -20,21 +20,20 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicLong
 
 
-@OptIn(DelicateCoroutinesApi::class)
 @Composable
 fun CalinaTheme(content: @Composable () -> Unit) {
     val colors = remember {
         darkColors(
-            primary = Color(0xFF2F97C1),
-            primaryVariant = Color(0xFF2F97C1),
+            primary = Color(0xFF2f65b7),
+            primaryVariant = Color(0xFF4e75bf),
             secondary = Color(0xFFABA2EE),
-            background = Color(0xFF333745),
-            surface = Color(0xFFEBF2FA),
+            background = Color(0xFF080019),
+            surface = Color(0xFF211e2e),
             error = Color(0xFFC14953),
             onPrimary = Color(0xFF2F2F2F),
             onSecondary = Color(0xFF101935),
-            onBackground = Color(0xFF92828D),
-            onSurface = Color(0xFF2F2F2F),
+            onBackground = Color(0xFFFFFFFF),
+            onSurface = Color(0xFFFFFFFF),
             onError = Color(0xFF2F2F2F)
         )
     }

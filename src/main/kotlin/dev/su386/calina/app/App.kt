@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -33,17 +34,26 @@ fun App() {
                 .fillMaxHeight()
                 .width(75.dp)
             ) {
-                NavRail(activeNavIndex, *panels.toTypedArray())
+                NavRail(
+                    modifier = Modifier
+                        .padding(start = 2.dp, end = 6.dp, top = 3.dp, bottom = 3.dp),
+                    activeIndex = activeNavIndex,
+                    iconsData = panels.toTypedArray()
+                )
+
             }
         }
 
         // Display
-        Column {
+        Column(
+            horizontalAlignment = Alignment.Start,
+        ) {
             Box(modifier = Modifier
+                .padding(5.dp)
                 .fillMaxHeight()
-                .background(Color.Red)
                 .fillMaxWidth()
             ) {
+                ConfigPanel()
             }
         }
     }
