@@ -5,28 +5,23 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import dev.su386.calina.Calina
+import dev.su386.calina.app.App.activeIndex
 import dev.su386.calina.app.App.panels
 
 @Composable
 @Preview
 fun App() {
-
     Row(
         modifier = Modifier
             .fillMaxSize(1f)
             .background(MaterialTheme.colors.background),
     ) {
-        var activeNavIndex = remember { mutableStateOf(0) }
-
         // Nav Rail
         Column {
             // Nav Bar Box
@@ -37,8 +32,7 @@ fun App() {
                 NavRail(
                     modifier = Modifier
                         .padding(start = 2.dp, end = 6.dp, top = 3.dp, bottom = 3.dp),
-                    activeIndex = activeNavIndex,
-                    iconsData = panels.toTypedArray()
+                    iconsData = panels.toTypedArray(),
                 )
 
             }
@@ -53,14 +47,35 @@ fun App() {
                 .fillMaxHeight()
                 .fillMaxWidth()
             ) {
-                ConfigPanel()
+                NavigationWindow(modifier = Modifier.fillMaxSize())
             }
         }
     }
 }
 
+@Composable
+fun NavigationWindow(modifier: Modifier = Modifier) {
+    Box(modifier = modifier) {
+        val panels = remember { panels }
+
+        panels[activeIndex].panel()
+    }
+}
+
 object App {
     val panels = listOf(
-        NavRailIconData("Settings", Icons.Default.Settings, false, { println("Settings button clicked") })
+        NavRailIconData(
+            "Gallery",
+            Icons.Default.Add,
+            { GalleryPanel() },
+            { println("Home button clicked") }
+        ),
+        NavRailIconData(
+            "Settings",
+            Icons.Default.Settings,
+            { ConfigPanel() },
+            { println("Settings button clicked") }
+        ),
     )
+    var activeIndex by mutableStateOf(0)
 }
