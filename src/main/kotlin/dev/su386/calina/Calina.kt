@@ -11,6 +11,7 @@ import androidx.compose.ui.window.application
 import dev.su386.calina.Calina.applicationScope
 import dev.su386.calina.Calina.exitAppSafely
 import dev.su386.calina.app.App
+import dev.su386.calina.images.ImageManager.cleanMissingImages
 import dev.su386.calina.images.ImageManager.images
 import dev.su386.calina.images.ImageManager.loadImageData
 import dev.su386.calina.images.ImageManager.readImageData
@@ -19,6 +20,7 @@ import dev.su386.calina.images.Tag.Companion.saveTags
 import dev.su386.calina.tasks.OnCloseTask
 import dev.su386.calina.tasks.OnStartTask
 import dev.su386.calina.tasks.RepeatTask
+import dev.su386.calina.tasks.RepeatTask.TaskCooldown.Companion.ms
 import dev.su386.calina.tasks.TaskManager
 import dev.su386.calina.tasks.TaskManager.onStart
 import dev.su386.calina.tasks.TaskManager.register
@@ -53,17 +55,11 @@ fun CalinaTheme(content: @Composable () -> Unit) {
 
 @OptIn(DelicateCoroutinesApi::class)
 fun main() {
-    register(OnStartTask("Hello World Task") {
-        println("Hello World!")
-    })
-    register(OnStartTask("Load config task", IO) {
-        CalinaConfig.load()
-        CalinaConfig.save()
-    })
+    register(OnStartTask("Hello World Task") { println("Hello World!") })
+    register(OnStartTask("Load config task", IO) { CalinaConfig.load(); CalinaConfig.save() })
     register(OnStartTask("Load Image Data", IO) {
         loadImageData()
         println("Images loaded: ${images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
-
         for (string in CalinaConfig.get<List<String>>("gallery/imagePaths")) {
             readImageData(string)
         }
@@ -73,28 +69,17 @@ fun main() {
         saveTags()
     })
 
-    register(RepeatTask(
-        taskCooldown = 1000L,
-    ) {
-        println("Repeating")
-    })
-    register(OnCloseTask("Save config task", IO) {
-        CalinaConfig.save()
+    val imageFilePathCooldown = (CalinaConfig.get<Long>("performance/imageHashTimeout") * 60L * 1000L).ms
+    register(RepeatTask("Clean image file paths", taskCooldown =imageFilePathCooldown) {
+        cleanMissingImages()
+        imageFilePathCooldown.duration = CalinaConfig.get<Long>("performance/imageHashTimeout") * 60L * 1000L
+        println("Cleaned nonexistent images")
     })
 
-    register(
-        OnCloseTask {
-            println("This is executing on close")
-        }
-    )
-    register(OnCloseTask("Save Image Data", IO) {
-        saveImageData()
-        saveTags()
-    })
+    register(OnCloseTask("Save config task", IO) { CalinaConfig.save() })
+    register(OnCloseTask("Save Image Data", IO) { saveImageData(); saveTags() })
 
     onStart()
-
-    // Now start the UI without blocking the background tasks
     application {
         applicationScope = this
         Window(onCloseRequest = ::exitAppSafely) {

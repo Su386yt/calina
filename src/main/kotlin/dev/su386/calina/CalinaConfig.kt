@@ -3,6 +3,7 @@ package dev.su386.calina
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import dev.su386.calina.config.Config
+import dev.su386.calina.config.Integer
 import dev.su386.calina.config.Paragraph
 import dev.su386.calina.config.StringList
 import dev.su386.calina.data.Database
@@ -23,8 +24,21 @@ object CalinaConfig: Config("Settings", "") {
             ),
             "imageFolders" // Backwards compatibility from the previous config library
         )
-
         this["gallery"].name = "Gallery"
+
+        this["performance/imageHashCount"] = Integer(
+            name = "Image Hash Count",
+            description = "Paths for which to look for images",
+            1000
+        )
+        this["performance/imageHashTimeout"] = Integer(
+            name = "Image Hash Timeout (min)",
+            description = "Paths for which to look for images",
+            10
+        )
+        this["performance"].name = "Performance"
+
+
     }
 
     @Deprecated("Use load()", ReplaceWith("load()"))
