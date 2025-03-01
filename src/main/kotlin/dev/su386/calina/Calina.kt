@@ -5,18 +5,25 @@ import androidx.compose.material.darkColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.window.ApplicationScope
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import dev.su386.calina.Calina.applicationScope
+import dev.su386.calina.Calina.exitAppSafely
 import dev.su386.calina.app.App
-import dev.su386.calina.images.ImageManager
+import dev.su386.calina.images.ImageManager.images
 import dev.su386.calina.images.ImageManager.loadImageData
 import dev.su386.calina.images.ImageManager.readImageData
 import dev.su386.calina.images.ImageManager.saveImageData
 import dev.su386.calina.images.Tag.Companion.saveTags
+import dev.su386.calina.tasks.OnCloseTask
+import dev.su386.calina.tasks.OnStartTask
+import dev.su386.calina.tasks.RepeatTask
+import dev.su386.calina.tasks.TaskManager
+import dev.su386.calina.tasks.TaskManager.onStart
+import dev.su386.calina.tasks.TaskManager.register
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicLong
 
 
@@ -46,28 +53,51 @@ fun CalinaTheme(content: @Composable () -> Unit) {
 
 @OptIn(DelicateCoroutinesApi::class)
 fun main() {
-    // Launch background tasks in a non-blocking coroutine
-    GlobalScope.launch(IO) {
+    register(OnStartTask("Hello World Task") {
         println("Hello World!")
-        loadImageData()
+    })
+    register(OnStartTask("Load config task", IO) {
         CalinaConfig.load()
-        println("Images loaded: ${ImageManager.images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
+        CalinaConfig.save()
+    })
+    register(OnStartTask("Load Image Data", IO) {
+        loadImageData()
+        println("Images loaded: ${images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
 
-        println("Read all data")
         for (string in CalinaConfig.get<List<String>>("gallery/imagePaths")) {
             readImageData(string)
         }
         println("Read all images")
-
+        println("Images loaded: ${images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
         saveImageData()
-        CalinaConfig.save()
         saveTags()
-        println("Images loaded: ${ImageManager.images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
-    }
+    })
+
+    register(RepeatTask(
+        taskCooldown = 1000L,
+    ) {
+        println("Repeating")
+    })
+    register(OnCloseTask("Save config task", IO) {
+        CalinaConfig.save()
+    })
+
+    register(
+        OnCloseTask {
+            println("This is executing on close")
+        }
+    )
+    register(OnCloseTask("Save Image Data", IO) {
+        saveImageData()
+        saveTags()
+    })
+
+    onStart()
 
     // Now start the UI without blocking the background tasks
     application {
-        Window(onCloseRequest = ::exitApplication) {
+        applicationScope = this
+        Window(onCloseRequest = ::exitAppSafely) {
             CalinaTheme {
                 App()
             }
@@ -77,4 +107,10 @@ fun main() {
 
 object Calina {
     var bytesLoaded = AtomicLong(0)
+    var applicationScope: ApplicationScope? = null
+
+    fun exitAppSafely() {
+        TaskManager.onClose()
+        applicationScope?.exitApplication()
+    }
 }

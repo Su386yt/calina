@@ -6,6 +6,10 @@ import dev.su386.calina.config.Config
 import dev.su386.calina.config.Paragraph
 import dev.su386.calina.config.StringList
 import dev.su386.calina.data.Database
+import dev.su386.calina.tasks.OnCloseTask
+import dev.su386.calina.tasks.OnStartTask
+import dev.su386.calina.tasks.TaskManager
+import kotlinx.coroutines.Dispatchers.IO
 
 object CalinaConfig: Config("Settings", "") {
     private const val PATH = "config.json"

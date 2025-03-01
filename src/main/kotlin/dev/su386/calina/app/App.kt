@@ -13,6 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import dev.su386.calina.app.App.activeIndex
 import dev.su386.calina.app.App.panels
+import dev.su386.calina.tasks.TaskManager
+import kotlinx.coroutines.runBlocking
 
 @Composable
 @Preview

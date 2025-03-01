@@ -1,8 +1,15 @@
 package dev.su386.calina.images
 
+import dev.su386.calina.Calina
+import dev.su386.calina.CalinaConfig
 import dev.su386.calina.data.Database.readData
 import dev.su386.calina.data.Database.writeData
 import dev.su386.calina.images.ImageData.Companion.toImageData
+import dev.su386.calina.images.Tag.Companion.saveTags
+import dev.su386.calina.tasks.OnCloseTask
+import dev.su386.calina.tasks.OnStartTask
+import dev.su386.calina.tasks.TaskManager
+import dev.su386.calina.tasks.TaskManager.register
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.asFlow
