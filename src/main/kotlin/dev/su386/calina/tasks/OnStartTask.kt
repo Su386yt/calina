@@ -12,13 +12,12 @@ import java.util.*
  * @param onRun - What to run when the task is called
  */
 class OnStartTask(
-    taskName: String = UUID.randomUUID().toString(),
+    taskName: String,
     coroutineDispatcher: CoroutineDispatcher = Default,
     onRun: () -> Unit
 ): ScheduledTask(
     taskName = taskName,
     runIn = 0L, // If these get caught in the task queue and aren't called on start, they should get called instantly
-    persistentTimer = false,
     coroutineDispatcher = coroutineDispatcher,
     onRun = onRun
 ) {

@@ -1,12 +1,11 @@
 package dev.su386.calina.data
 
-import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.core.util.DefaultIndenter
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import com.google.gson.ExclusionStrategy
+import com.google.gson.FieldAttributes
+import com.google.gson.GsonBuilder
+import com.google.gson.reflect.TypeToken
 import java.io.File
+import java.lang.reflect.TypeVariable
 import java.nio.file.Files
 
 /**
@@ -17,14 +16,10 @@ object Database {
      * @link https://docs.oracle.com/javase/tutorial/essential/environment/sysprop.html
      */
     val PATH = "${System.getProperty("user.home")}/calina"
-    val JSON = jacksonObjectMapper().apply {
-        registerKotlinModule()
-        setSerializationInclusion(JsonInclude.Include.ALWAYS)
-        setDefaultPrettyPrinter(DefaultPrettyPrinter().apply {
-            indentArraysWith(DefaultIndenter("  ", "\n"))
-            indentObjectsWith(DefaultIndenter("  ", "\n"))
-        })
-    }
+    val JSON = GsonBuilder()
+        .setExclusionStrategies(TransientExclusionStrategy())
+        .setPrettyPrinting()
+        .create()
     /**
      * Access data from the database
      *
@@ -37,7 +32,12 @@ object Database {
     ): T? {
         val file = File("$PATH/${path.trim('/', '.')}")
         if (!file.exists()) return null
-        return JSON.readValue(file, object : TypeReference<T>() {})
+        val json: T = JSON.fromJson(JSON.newJsonReader(file.bufferedReader()), object : TypeToken<T>() {}.type)
+        return if (json == null) {
+            return null
+        } else {
+            json
+        }
     }
 
     /**
@@ -53,9 +53,7 @@ object Database {
 
         try {
             file.outputStream().bufferedWriter().use { writer ->
-                JSON.factory.createGenerator(writer).use { jsonGenerator ->
-                    JSON.writerWithDefaultPrettyPrinter().writeValue(jsonGenerator, data)
-                }
+                JSON.toJson(data, writer)
             }
         } catch (e: Exception) {
             println("Error writing data: ${e.message}")
@@ -80,5 +78,15 @@ object Database {
     fun getFile(path: String): File? {
         val file = File("$PATH/${path.trim('/', '.')}")
         return if (file.exists()) file else null
+    }
+
+    private class TransientExclusionStrategy : ExclusionStrategy {
+        override fun shouldSkipField(f: FieldAttributes): Boolean {
+            return f.getAnnotation(Transient::class.java) != null
+        }
+
+        override fun shouldSkipClass(clazz: Class<*>?): Boolean {
+            return false
+        }
     }
 }

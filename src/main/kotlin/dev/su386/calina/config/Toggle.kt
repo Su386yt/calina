@@ -4,14 +4,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.node.JsonNodeFactory
+import com.google.gson.JsonElement
+import com.google.gson.JsonPrimitive
 import dev.su386.calina.utils.AutoResizeText
 
 class Toggle(
     name: String,
     description: String,
-    private val defaultState: Boolean,
+    defaultState: Boolean,
 ): ConfigOption(name, description) {
     override var value: Boolean = defaultState
 
@@ -24,13 +24,12 @@ class Toggle(
         )
     }
 
-
-    override fun loadFromJson(jsonNode: JsonNode) {
-        value = jsonNode["state"]?.asBoolean() ?: defaultState
+    override fun loadFromJson(jsonNode: JsonElement) {
+        value = jsonNode.asBoolean
     }
 
-    override fun saveToJson(): JsonNode {
-        return JsonNodeFactory.instance.objectNode().put("state", value)
+    override fun saveToJson(): JsonElement {
+        return JsonPrimitive(value)
     }
 
 }

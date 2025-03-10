@@ -12,13 +12,12 @@ import java.util.*
  * @param onRun - What to run when the task is called
  */
 class OnCloseTask(
-    taskName: String = UUID.randomUUID().toString(),
+    taskName: String,
     coroutineDispatcher: CoroutineDispatcher = Default,
     onRun: () -> Unit
 ): ScheduledTask(
     taskName = taskName,
     runIn = Long.MAX_VALUE,
-    persistentTimer = false,
     coroutineDispatcher = coroutineDispatcher,
     onRun = onRun
 ) {

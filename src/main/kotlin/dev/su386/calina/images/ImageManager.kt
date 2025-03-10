@@ -3,14 +3,12 @@ package dev.su386.calina.images
 import dev.su386.calina.data.Database.readData
 import dev.su386.calina.data.Database.writeData
 import dev.su386.calina.images.ImageData.Companion.toImageData
+import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
@@ -78,8 +76,8 @@ object ImageManager {
         images[imageData.hash] = imageData
         imageData.tags.addAll(
             Tag.tags.values
-                .filter { it.imageHashes.contains(imageData.hash) }
-                .mapNotNull { it.uuid }
+                .filter { println(it); it.imageHashes.contains(imageData.hash) }
+                .mapNotNull { println(it); it.uuid }
         )
 
         loadedPaths.addAll(imageData.filePaths)
@@ -92,8 +90,9 @@ object ImageManager {
      */
     fun loadImageData() {
         val imageSet = readData<MutableSet<ImageData>>(this.FILE_PATH) ?: mutableSetOf()
-
+        println(imageSet)
         for (image in imageSet){
+            println(image)
             registerImage(image)
         }
     }
@@ -112,7 +111,22 @@ object ImageManager {
      */
     fun cleanMissingImages() {
         images.forEach { (_, imageData) ->
-            imageData.filePaths = imageData.filePaths.filter { path -> File(path).exists() }.toTypedArray()
+            imageData.cleanFilePaths()
         }
+    }
+
+    /**
+     * Removes all images whose files do not match their hash
+     *
+     * @param n - Takes the first [n] images
+     */
+    fun cleanWrongImages(n: Int = images.size) = runBlocking(IO) {
+        val jobs = mutableListOf<Deferred<Unit>>()
+
+        images.values.take(n).forEach {
+            jobs.add(async(IO) { it.cleanFilePaths(); return@async })
+        }
+
+        jobs.awaitAll()
     }
 }

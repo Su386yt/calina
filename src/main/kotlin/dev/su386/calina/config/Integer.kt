@@ -1,6 +1,5 @@
 package dev.su386.calina.config
 
-import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
@@ -11,10 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.node.ArrayNode
-import com.fasterxml.jackson.databind.node.JsonNodeFactory
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.google.gson.JsonElement
+import com.google.gson.JsonPrimitive
 import dev.su386.calina.utils.AutoResizeText
 
 class Integer(
@@ -80,11 +77,11 @@ class Integer(
 
 
 
-    override fun loadFromJson(jsonNode: JsonNode) {
-        this.value = jsonNode.asInt(0)
+    override fun loadFromJson(jsonNode: JsonElement) {
+        this.value = jsonNode.asInt
     }
 
-    override fun saveToJson(): JsonNode {
-        return JsonNodeFactory.instance.numberNode(value)
+    override fun saveToJson(): JsonElement {
+        return JsonPrimitive(this.value)
     }
 }

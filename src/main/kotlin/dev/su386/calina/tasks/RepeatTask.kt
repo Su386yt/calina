@@ -1,5 +1,6 @@
 package dev.su386.calina.tasks
 
+import com.google.gson.annotations.SerializedName
 import dev.su386.calina.tasks.RepeatTask.TaskCooldown.Companion.ms
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -19,26 +20,28 @@ import java.util.*
  * @see dev.su386.calina.tasks.ScheduledTask
  */
 class RepeatTask(
-    taskName: String = UUID.randomUUID().toString(),
+    taskName: String,
     val taskCooldown: TaskCooldown,
-    persistentCooldown: Boolean = false,
     startImmediately: Boolean = true,
     coroutineDispatcher: CoroutineDispatcher = Default,
-    onRun: () -> Unit
+    onRun: (TaskCooldown) -> Unit
 ): ScheduledTask(
     taskName = taskName,
     runIn = taskCooldown.duration,
-    persistentTimer = persistentCooldown,
     coroutineDispatcher = coroutineDispatcher,
     onRun = {
-        TaskManager.register(RepeatTask(
-            taskName = taskName,
-            taskCooldown = taskCooldown,
-            startImmediately = false,
-            persistentCooldown = persistentCooldown,
-            onRun = onRun
-        ))
-        onRun()
+        try {
+            onRun(taskCooldown)
+        } catch (e: Exception) {
+            throw e
+        } finally {
+            TaskManager.register(RepeatTask(
+                taskName = taskName,
+                taskCooldown = taskCooldown,
+                startImmediately = false,
+                onRun = onRun
+            ))
+        }
     }
 ) {
     constructor(
@@ -47,21 +50,22 @@ class RepeatTask(
         persistentCooldown: Boolean = false,
         startImmediately: Boolean = true,
         coroutineDispatcher: CoroutineDispatcher = Default,
-        onRun: () -> Unit
+        onRun: (TaskCooldown) -> Unit
     ) : this(
         taskName,
         taskCooldown.ms,
-        persistentCooldown,
         startImmediately,
         coroutineDispatcher,
         onRun
     )
 
+    @SerializedName("repeatCreateTime")
     override val createTime = if (startImmediately) {
         0
     } else {
         System.currentTimeMillis()
     }
+
     override val runIn get() = taskCooldown.duration - System.currentTimeMillis() + createTime
 
 

@@ -17,9 +17,8 @@ import java.util.*
  * @param onRun - What to run when the task is called
  */
 open class ScheduledTask(
-    open val taskName: String = UUID.randomUUID().toString(),
+    open val taskName: String,
     open val runIn: Long,
-    open val persistentTimer: Boolean = false,
     open val coroutineDispatcher: CoroutineDispatcher = Default,
     open val onRun: () -> Unit
 ) {

@@ -53,27 +53,32 @@ fun CalinaTheme(content: @Composable () -> Unit) {
     )
 }
 
-@OptIn(DelicateCoroutinesApi::class)
 fun main() {
     register(OnStartTask("Hello World Task") { println("Hello World!") })
     register(OnStartTask("Load config task", IO) { CalinaConfig.load(); CalinaConfig.save() })
     register(OnStartTask("Load Image Data", IO) {
         loadImageData()
         println("Images loaded: ${images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
-        for (string in CalinaConfig.get<List<String>>("gallery/imagePaths")) {
-            readImageData(string)
-        }
-        println("Read all images")
-        println("Images loaded: ${images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
         saveImageData()
         saveTags()
     })
 
-    val imageFilePathCooldown = (CalinaConfig.get<Long>("performance/imageHashTimeout") * 60L * 1000L).ms
-    register(RepeatTask("Clean image file paths", taskCooldown =imageFilePathCooldown) {
+    register(RepeatTask(
+        taskName = "Clean image file paths", taskCooldown = CalinaConfig.get<Long>("performance/imageHashTimeout") * 60L * 1000L,
+        startImmediately = false,
+        persistentCooldown = true
+    ) {
         cleanMissingImages()
-        imageFilePathCooldown.duration = CalinaConfig.get<Long>("performance/imageHashTimeout") * 60L * 1000L
+        it.duration = CalinaConfig.get<Long>("performance/imageHashTimeout") * 60L * 1000L
         println("Cleaned nonexistent images")
+    })
+    register(RepeatTask("Look for images", taskCooldown = CalinaConfig.get<Long>("performance/imageSearchTimeout") * 60L * 1000L) {
+        println("Searching for images")
+        for (string in CalinaConfig.get<List<String>>("gallery/imagePaths")) {
+            readImageData(string)
+        }
+        saveImageData()
+        println("Images loaded: ${images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
     })
 
     register(OnCloseTask("Save config task", IO) { CalinaConfig.save() })

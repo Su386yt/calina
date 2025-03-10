@@ -4,13 +4,12 @@ import com.drew.imaging.ImageMetadataReader
 import com.drew.metadata.exif.ExifIFD0Directory
 import com.drew.metadata.exif.ExifSubIFDDirectory
 import com.drew.metadata.exif.GpsDirectory
-import com.fasterxml.jackson.annotation.JsonCreator
-import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonProperty
+
 import dev.su386.calina.Calina
 import dev.su386.calina.utils.HashingInputStream
 import dev.su386.calina.utils.Location
 import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers.IO
 import java.awt.Image
 import java.io.File
 import java.io.FileInputStream
@@ -21,22 +20,16 @@ import java.security.MessageDigest
 import java.util.*
 import javax.imageio.ImageIO
 
-class ImageData @JsonCreator constructor(
-    @JsonProperty("location")
+class ImageData constructor(
     val location: Location,
-    @JsonProperty("date")
     val date: Long,
-    @JsonProperty("hash")
     val hash: String,
-    @JsonProperty("cameraInfo")
     val cameraInfo: CameraInfo,
-    @JsonProperty("filePaths")
     vararg var filePaths: String
 ) {
     /**
      * Returns an array of all valid images associated with this image data.
      */
-    @get:JsonIgnore
     val images: Array<Image> get() {
         return filePaths.mapNotNull { path ->
             val file = File(path)
@@ -49,11 +42,12 @@ class ImageData @JsonCreator constructor(
         }.toTypedArray()
     }
 
-    @get:JsonIgnore
     val dateTime: Date get() = Date(date)
 
-    @JsonIgnore
-    val tags: MutableSet<UUID> = mutableSetOf()
+    @Transient
+    private var _tags: MutableSet<UUID>? = null
+
+    val tags: MutableSet<UUID> get() = _tags ?: mutableSetOf<UUID>().also{ this._tags = it }
 
     /**
      * Adds a new tag to this image
@@ -63,6 +57,46 @@ class ImageData @JsonCreator constructor(
     fun addTag(tag: Tag) {
         tags.add(tag.uuid)
         tag.imageHashes.add(this.hash)
+    }
+
+    /**
+     * Checks whether the file in [filePaths] exists, and removes them if they do not
+     *
+     * @return The number of file paths removed
+     */
+    fun cleanFilePaths(): Int {
+        val oldLength = filePaths.size
+        this.filePaths = this.filePaths.filter { path -> File(path).exists() }.toTypedArray()
+        return oldLength - filePaths.size
+    }
+
+    /**
+     * Checks whether the file in [filePaths] refers to the same file, and removes them if they do not
+     *
+     * @return The number of file paths removed
+     */
+    suspend fun checkFileHashes(): Int = runBlocking<Int> {
+        val jobs = mutableListOf<Deferred<Unit>>()
+        val cleanedPaths = mutableListOf<String>()
+        val oldLength = this@ImageData.filePaths.size
+
+        this@ImageData.filePaths.forEach { path ->
+            jobs.add(async(IO) {
+                if (File(path).inputStream().parallelSHA256() == this@ImageData.hash) {
+                    cleanedPaths.add(path)
+                }
+            })
+        }
+
+        jobs.awaitAll()
+
+        this@ImageData.filePaths = cleanedPaths.toTypedArray()
+
+        return@runBlocking oldLength - this@ImageData.filePaths.size
+    }
+
+    override fun toString(): String {
+        return "ImageData(location=$location, date=$date, hash='$hash', cameraInfo=$cameraInfo, filePaths=${filePaths.contentToString()}, tags=$tags)"
     }
 
     companion object {
@@ -165,7 +199,7 @@ class ImageData @JsonCreator constructor(
         }
     }
 
-    data class CameraInfo @JsonCreator constructor(
-        @JsonProperty("name") val name: String
+    data class CameraInfo  constructor(
+        val name: String
     )
 }
