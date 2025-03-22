@@ -5,8 +5,9 @@ import com.drew.metadata.exif.ExifIFD0Directory
 import com.drew.metadata.exif.ExifSubIFDDirectory
 import com.drew.metadata.exif.GpsDirectory
 import dev.su386.calina.Calina
+//import dev.su386.calina.app.totalLoaded
 import dev.su386.calina.data.Database
-import dev.su386.calina.utils.HashingInputStream
+import dev.su386.calina.utils.HashingImageInputStream
 import dev.su386.calina.utils.Location
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
@@ -15,13 +16,13 @@ import java.awt.RenderingHints
 import java.awt.image.BufferedImage
 import java.io.File
 import java.io.FileInputStream
-import java.io.FileNotFoundException
 import java.nio.MappedByteBuffer
 import java.nio.file.Files
 import java.nio.file.attribute.BasicFileAttributes
 import java.security.MessageDigest
 import java.util.*
 import javax.imageio.ImageIO
+import javax.imageio.ImageReadParam
 
 private const val COMPRESSED_IMAGE_SIZE = 240
 
@@ -33,8 +34,6 @@ class ImageData(
     val imageSize: ImageSize,
     vararg var filePaths: String
 ) {
-//    @Transient
-//    private var cachedImage: BufferedImage? = null
     private var imageIconPath: String? = null
 
     /**
@@ -44,66 +43,98 @@ class ImageData(
      */
     val image: BufferedImage get() {
         try {
-//            if (cache != null) {
-//                return cache
-//            } else {
-                for (file in filePaths) {
-                    val messageDigest = MessageDigest.getInstance("SHA-256")
+            for (file in filePaths) {
+                val messageDigest = MessageDigest.getInstance("SHA-256")
 
-                    File(file).inputStream().buffered(64 * 1024).use { inputStream ->
-                        val hashingInputStream = HashingInputStream(inputStream, messageDigest)
+                val imageInputStream = ImageIO.createImageInputStream(File(file))
+                val hashingInputStream = HashingImageInputStream(imageInputStream, messageDigest)
+                var image: BufferedImage? = null
 
-                        val image = ImageIO.read(hashingInputStream)
-                        // Ensure the entire stream is read
-                        val buffer = ByteArray(64 * 1024)
-                        while (hashingInputStream.read(buffer) != -1) {
-                            // Continue reading to the end to include all bytes in the hash
-                        }
-                        val hash = messageDigest.digest().joinToString("") { "%02x".format(it) }
-                        if (this.hash == hash && image != null){
-//                            cachedImage = image
-                            return image
-                        }
-                    }
-//                }
+                try {
+                    image = ImageIO.read(hashingInputStream)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+
+                // Ensure the entire stream is read
+                val buffer = ByteArray(64 * 1024)
+                while (hashingInputStream.read(buffer) != -1) {
+                    // Continue reading to the end to include all bytes in the hash
+                }
+                val hash = messageDigest.digest().joinToString("") { "%02x".format(it) }
+                // Compute the hash now that we've read all bytes
+                hashingInputStream.close()
+
+                if (this.hash == hash && image != null){
+//                    totalLoaded++
+                    return image
+                }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            println("Error loading icon for ${this.filePaths.firstOrNull()}: ${e.message}")
         }
-        return BufferedImage(32, 32, BufferedImage.TYPE_INT_RGB).also { /* cachedImage = it */ }
 
-
+        return BufferedImage(32, 32, BufferedImage.TYPE_INT_RGB)
     }
 
     val icon: BufferedImage get() {
-        val path = imageIconPath ?: "${Database.PATH}/icons/$hash+$date.png".also { imageIconPath = it }
-        val file = File(path).also { it.parentFile.mkdirs() }
-        if (file.exists()) {
-            return ImageIO.read(file)
-        } else {
-            val compressedImageSize = imageSize.compressedImageSize
-            val original = this.image
-            val imageType = if (original.transparency != BufferedImage.OPAQUE)
-                BufferedImage.TYPE_INT_ARGB
-            else
-                BufferedImage.TYPE_INT_RGB
+        val path = imageIconPath ?: "${Database.PATH}/icons/$hash.png".also { imageIconPath = it }
+        val iconFile = File(path).also { it.parentFile.mkdirs() }
+        iconFile.setWritable(true)
+        if (iconFile.exists()) {
+            try {
+                return ImageIO.read(iconFile)
+            } catch (e: Exception) {
+                println("Error loading icon for ${this.filePaths.firstOrNull()} (hash: $hash): ${e.message}")
 
-            // Create a new BufferedImage with the scaled dimensions.
-            val resizedImage = BufferedImage(compressedImageSize.x, compressedImageSize.y, imageType)
-
-            val graphics: Graphics2D = resizedImage.createGraphics().apply {
-                setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
-                setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
+                imageIconPath = null
+                if (iconFile.exists()) {
+                    iconFile.delete()
+                    iconFile.deleteOnExit()
+                }
+                return this.icon
             }
+        } else {
+            var image = BufferedImage(32, 32, BufferedImage.TYPE_INT_RGB)
+            try {
+                for (file in filePaths){
+                    // Create an input stream for the image file.
+                    val imageInputStream = ImageIO.createImageInputStream(File(file)) ?: continue
+                    val readers = ImageIO.getImageReaders(imageInputStream)
+                    if (!readers.hasNext()) continue
 
-            // Draw the original image into the resized one.
-            graphics.drawImage(original, 0, 0, compressedImageSize.x, compressedImageSize.y, null)
-            graphics.dispose()
+                    val reader = readers.next()
+                    reader.input = imageInputStream
 
-            file.createNewFile()
-            ImageIO.write(resizedImage, "png", file)
+                    // Get original dimensions.
+                    val originalWidth = reader.getWidth(0)
+                    val originalHeight = reader.getHeight(0)
 
-            return resizedImage
+                    // Calculate a subsampling factor (an integer >= 1).
+                    var subsampling = 1
+                    while ((originalWidth / subsampling) > this.imageSize.compressedImageSize.x && (originalHeight / subsampling) > this.imageSize.compressedImageSize.y) {
+                        subsampling++
+                    }
+                    // If subsampling overshoots, step back one.
+                    if (subsampling > 1) subsampling--
+
+                    // Set the subsampling factor.
+                    val param: ImageReadParam = reader.defaultReadParam
+                    param.setSourceSubsampling(subsampling, subsampling, 0, 0)
+
+                    // Read the image with subsampling applied.
+                    image = reader.read(0, param)
+                    reader.dispose()
+                    imageInputStream.close()
+                }
+
+                iconFile.createNewFile()
+                ImageIO.write(image, "png", iconFile)
+
+            } catch (e: Exception) {
+                println("Error creating icon for ${this.filePaths.firstOrNull()}: ${e.message}")
+            }
+            return image
         }
     }
 
@@ -208,28 +239,37 @@ class ImageData(
         suspend fun File.toImageData(): ImageData = withContext(IO) {
             val messageDigest = MessageDigest.getInstance("SHA-256")
 
+            var imageSize = ImageSize(32, 32)
+            val imageInputStream = ImageIO.createImageInputStream(this@toImageData)
+            val hashingInputStream = HashingImageInputStream(imageInputStream, messageDigest)
+
+            val imageReaders = ImageIO.getImageReaders(hashingInputStream)
+            if (imageReaders.hasNext()) {
+                val reader = imageReaders.next()
+                reader.setInput(hashingInputStream, true)
+
+                imageSize = ImageSize(reader.getWidth(reader.minIndex), reader.getHeight(reader.minIndex))
+                reader.dispose()
+            }
+
+            // Ensure the entire stream is read
+            val buffer = ByteArray(64 * 1024)
+            while (hashingInputStream.read(buffer) != -1) {
+                // Continue reading to the end to include all bytes in the hash
+            }
+            // Compute the hash now that we've read all bytes
+            val hash = messageDigest.digest().joinToString("") { "%02x".format(it) }
+            hashingInputStream.close()
+
             // Open the InputStream and wrap it with HashingInputStream
-            this@toImageData.inputStream().buffered(64 * 1024).use { fileInputStream ->
-                val hashingInputStream = HashingInputStream(fileInputStream, messageDigest)
-
-                val image = ImageIO.read(hashingInputStream)
-                val imageSize = ImageSize(image?.width ?: 32, image?.height ?: 32)
-                // Ensure the entire stream is read
-                val buffer = ByteArray(64 * 1024)
-                while (hashingInputStream.read(buffer) != -1) {
-                    // Continue reading to the end to include all bytes in the hash
-                }
-
+            this@toImageData.inputStream().buffered().use { input ->
                 // Read metadata using the hashing input stream
                 val metadata = try {
-                    ImageMetadataReader.readMetadata(this@toImageData.inputStream())
+                    ImageMetadataReader.readMetadata(input)
                 } catch (e: Exception) {
                     println("Failed to read metadata for file ${this@toImageData.path}: ${e.message}")
                     null
                 }
-
-                // Compute the hash now that we've read all bytes
-                val hash = messageDigest.digest().joinToString("") { "%02x".format(it) }
 
                 // Extract metadata as before
                 val gpsDirectory = metadata?.getFirstDirectoryOfType(GpsDirectory::class.java)

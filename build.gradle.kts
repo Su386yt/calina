@@ -25,6 +25,7 @@ dependencies {
     implementation("com.google.code.gson:gson:2.12.1")
     implementation("com.drewnoakes:metadata-extractor:2.18.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
+    implementation("com.twelvemonkeys.imageio:imageio-jpeg:3.12.0")
 }
 
 compose.desktop {

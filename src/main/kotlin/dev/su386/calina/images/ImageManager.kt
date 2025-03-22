@@ -79,8 +79,8 @@ object ImageManager {
         images[imageData.hash] = imageData
         imageData.tags.addAll(
             Tag.tags.values
-                .filter { println(it); it.imageHashes.contains(imageData.hash) }
-                .mapNotNull { println(it); it.uuid }
+                .filter { it.imageHashes.contains(imageData.hash) }
+                .mapNotNull {  it.uuid }
         )
 
         loadedPaths.addAll(imageData.filePaths)
@@ -93,9 +93,7 @@ object ImageManager {
      */
     fun loadImageData() {
         val imageSet = readData<MutableSet<ImageData>>(this.FILE_PATH) ?: mutableSetOf()
-        println(imageSet)
         for (image in imageSet){
-            println(image)
             registerImage(image)
         }
     }

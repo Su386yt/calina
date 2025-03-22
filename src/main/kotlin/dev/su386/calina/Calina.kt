@@ -27,6 +27,7 @@ import dev.su386.calina.tasks.TaskManager.register
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers.IO
 import java.util.concurrent.atomic.AtomicLong
+import javax.imageio.ImageIO
 
 
 @Composable
@@ -54,6 +55,7 @@ fun CalinaTheme(content: @Composable () -> Unit) {
 }
 
 fun main() {
+    register(OnStartTask("Check ImageIO Plugins") { ImageIO.scanForPlugins() })
     register(OnStartTask("Hello World Task") { println("Hello World!") })
     register(OnStartTask("Load config task", IO) { CalinaConfig.load(); CalinaConfig.save() })
     register(OnStartTask("Load Image Data", IO) {

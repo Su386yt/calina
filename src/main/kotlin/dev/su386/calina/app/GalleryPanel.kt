@@ -2,12 +2,13 @@ package dev.su386.calina.app
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,7 +22,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.su386.calina.images.ImageData
-import dev.su386.calina.images.ImageManager
 import dev.su386.calina.images.ImageManager.getImagesByDate
 import dev.su386.calina.images.ImageManager.getImagesInRange
 import dev.su386.calina.utils.AutoResizeText
@@ -29,9 +29,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.Semaphore
 
 
-const val IMAGES_TO_CACHE = 100
+private val semaphore = Semaphore(20)
+var totalLoaded = 0
 
 @Composable
 fun GalleryPanel() {
@@ -40,17 +42,20 @@ fun GalleryPanel() {
 
 @Composable
 fun GalleryWaterfall() {
+    val listState = rememberLazyListState()
+    val images = getImagesByDate()
 
     LazyColumn(
-        modifier = Modifier
-            .fillMaxWidth()
+        state = listState,
+        modifier = Modifier.fillMaxWidth()
     ) {
-        val images = getImagesByDate()
-        items(images) {
+        items(images, key = { it.first().dateTime }) { imageGroup ->
             Day(
-                modifier = Modifier.padding(5.dp).fillMaxWidth(),
-                date = it.first().dateTime,
-                images = it.toTypedArray()
+                modifier = Modifier
+                    .padding(5.dp)
+                    .fillMaxWidth(),
+                date = imageGroup.first().dateTime,
+                images = imageGroup.toTypedArray()
             )
         }
     }
@@ -58,8 +63,20 @@ fun GalleryWaterfall() {
 
 @Composable
 private fun Day(modifier: Modifier = Modifier, date: Date, images: Array<ImageData>) {
+    var parentWidth by remember { mutableStateOf(0) }
+    val parentWidthDp = with(LocalDensity.current) { parentWidth.toDp() }
+
+    val groupedImages = groupImagesIntoRows(
+        images,
+        200.dp,
+        5.dp,
+        parentWidthDp,
+    )
+
+
     Box(
         modifier = modifier
+            .height(IntrinsicSize.Min)
             .clip(RoundedCornerShape(10.dp))
             .background(color = MaterialTheme.colors.surface)
     ) {
@@ -78,21 +95,13 @@ private fun Day(modifier: Modifier = Modifier, date: Date, images: Array<ImageDa
                 color = MaterialTheme.colors.onBackground,
                 align = Alignment.CenterStart,
             )
-            var parentWidth by remember { mutableStateOf(0) }
-            val parentWidthDp = with(LocalDensity.current) { parentWidth.toDp() }
-
-            val groupedImages = groupImagesIntoRows(
-                images,
-                200.dp,
-                5.dp,
-                parentWidthDp,
-            )
 
 
 
             Column(
                 Modifier
                     .fillMaxWidth()
+                    .height(IntrinsicSize.Min)
                     .onGloballyPositioned { layoutResult ->
                         parentWidth = layoutResult.size.width
                     }
@@ -107,6 +116,7 @@ private fun Day(modifier: Modifier = Modifier, date: Date, images: Array<ImageDa
                             .padding(2.dp),
                     )
                 }
+
                 if (groupedImages.isNotEmpty()) {
                     val group = groupedImages.last()
                     GalleryRow(
@@ -190,7 +200,13 @@ fun rememberAsyncImage(image: ImageData): State<Painter> {
     val placeholder: Painter = ColorPainter(Color.Gray) // Placeholder while loading
     return produceState(placeholder, image) {
         value = withContext(Dispatchers.IO) {
-            image.icon.toPainter()
+            semaphore.acquire()
+            try {
+                val icon = image.icon
+                icon.toPainter().also { icon.flush() }
+            } finally {
+                semaphore.release()
+            }
         }
     }
 }
