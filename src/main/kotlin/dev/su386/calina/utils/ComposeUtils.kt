@@ -9,11 +9,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import org.jetbrains.skia.Bitmap
-import org.jetbrains.skiko.toBitmap
-import java.awt.image.BufferedImage
+import androidx.compose.ui.unit.dp
 
 @Composable
 fun AutoResizeText(
@@ -24,12 +23,28 @@ fun AutoResizeText(
 ) {
     BoxWithConstraints(
         modifier = modifier,
-        contentAlignment = align,
+        contentAlignment = align
     ) {
         val density = LocalDensity.current
+        val textMeasurer = rememberTextMeasurer()
 
-        val maxFontSize = remember(maxHeight, density) {
-            with(density) { (maxHeight * 0.7f).toSp() }
+        // Calculate the maximum font size
+        val maxFontSize = remember(maxWidth, maxHeight, density, text) {
+            with(density) {
+                var textSize = maxHeight * 0.7f // starting point based on container height
+                var measuredWidth: Int
+
+                do {
+                    textSize -= 1f.dp
+                    val textLayoutResult = textMeasurer.measure(
+                        text = text,
+                        style = TextStyle(fontSize = textSize.toSp())
+                    )
+                    measuredWidth = textLayoutResult.size.width
+                } while (measuredWidth > maxWidth.roundToPx() && textSize > 1.dp)
+
+                textSize.toSp()
+            }
         }
 
         Text(
@@ -40,7 +55,9 @@ fun AutoResizeText(
             textAlign = TextAlign.Center,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            style = TextStyle(lineHeight = maxFontSize) // Helps with vertical centering
+            style = TextStyle(lineHeight = maxFontSize)
         )
     }
 }
+
+
