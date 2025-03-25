@@ -138,7 +138,12 @@ fun SearchBar(modifier: Modifier) {
                 value = searchBarContent,
                 onValueChange = { newText ->
                     searchBarContent = newText.copy(
-                        selection = if (newText.text == searchBarContent.text) {
+                        selection = if (
+                            newText.text == "Search..." ||
+                            (newText.text == searchBarContent.text &&
+                            searchBarContent.selection == TextRange(0, searchBarContent.text.length) &&
+                            newText.selection.end == searchBarContent.text.length)
+                            ) {
                             searchBarContent.selection
                         } else {
                             newText.selection
@@ -162,6 +167,7 @@ fun SearchBar(modifier: Modifier) {
                                 TextRange.Zero
                             }
                         )
+
                     },
                 cursorBrush = SolidColor(MaterialTheme.colors.onSurface)
             )

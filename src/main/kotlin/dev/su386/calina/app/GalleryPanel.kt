@@ -82,7 +82,6 @@ private fun Day(modifier: Modifier = Modifier, date: Date, images: Array<ImageDa
         parentWidthDp,
     )
 
-
     Box(
         modifier = modifier
             .height(IntrinsicSize.Min)
@@ -104,8 +103,6 @@ private fun Day(modifier: Modifier = Modifier, date: Date, images: Array<ImageDa
                 color = MaterialTheme.colors.onBackground,
                 align = Alignment.CenterStart,
             )
-
-
 
             Column(
                 Modifier
@@ -146,7 +143,10 @@ private fun Day(modifier: Modifier = Modifier, date: Date, images: Array<ImageDa
 
 @Composable
 private fun GalleryRow(
-    images: List<ImageData>, height: Dp, modifier: Modifier = Modifier, horizontalArrangement: Arrangement.Horizontal = Arrangement.SpaceBetween
+    images: List<ImageData>,
+    height: Dp,
+    modifier: Modifier = Modifier,
+    horizontalArrangement: Arrangement.Horizontal = Arrangement.SpaceBetween
 ) {
     val padding = if (horizontalArrangement == Arrangement.Start) {
         2.dp
