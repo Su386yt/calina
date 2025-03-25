@@ -23,7 +23,6 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import dev.su386.calina.app.App.activeHeading
 import dev.su386.calina.app.App.activeIndex
 import dev.su386.calina.app.App.panels
 import dev.su386.calina.app.App.searchBarContent
@@ -78,7 +77,7 @@ fun App() {
 fun NavigationWindow(modifier: Modifier = Modifier) {
     Column(modifier = modifier.focusable(true)) {
         Header(
-            heading = activeHeading,
+            heading = panels[activeIndex].name,
             modifier = Modifier.fillMaxWidth()
                 .fillMaxHeight(.075f)
                 .heightIn(max = 50.dp)
@@ -186,6 +185,5 @@ object App {
         ),
     )
     var activeIndex by mutableStateOf(0)
-    var activeHeading by mutableStateOf(panels[activeIndex].name)
     var searchBarContent by mutableStateOf(TextFieldValue("Search..."))
 }

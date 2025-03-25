@@ -73,7 +73,6 @@ fun NavRailIcon (
                 .clickable(
                     onClick = {
                         App.activeIndex = iconIndex
-                        App.activeHeading = name
                         onClick.invoke()
                     },
                 ),
