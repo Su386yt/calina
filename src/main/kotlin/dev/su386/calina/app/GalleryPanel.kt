@@ -23,10 +23,9 @@ import androidx.compose.ui.unit.dp
 import dev.su386.calina.app.App.searchBarContent
 import dev.su386.calina.images.ImageData
 import dev.su386.calina.images.ImageManager.getImagesByDate
-import dev.su386.calina.images.filters.DayFilter
-import dev.su386.calina.images.filters.MonthFilter
-import dev.su386.calina.images.filters.TagNameFilter
-import dev.su386.calina.images.filters.YearFilter
+import dev.su386.calina.images.filters.*
+import dev.su386.calina.images.filters.FilterJunction.Companion.toConjunction
+import dev.su386.calina.images.filters.FilterJunction.Companion.toDisJunction
 import dev.su386.calina.utils.AutoResizeText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -46,12 +45,28 @@ fun GalleryPanel() {
 fun GalleryWaterfall(modifier: Modifier) {
     val listState = rememberLazyListState()
     val searchBarContent = if (searchBarContent.text == "Search...") { "" } else { searchBarContent.text }
-    val filters = listOf(
+    val tokens = searchBarContent.split(" ")
+
+    val conjunction = mutableListOf<Filter>()
+    tokens.forEach {
+        conjunction.add(
+            listOf(
+                DayFilter(it),
+                MonthFilter(it),
+                YearFilter(it),
+                TagNameFilter(it)
+            ).toDisJunction()
+        )
+    }
+
+    val filters = mutableListOf(
         DayFilter(searchBarContent),
         MonthFilter(searchBarContent),
         YearFilter(searchBarContent),
-        TagNameFilter(searchBarContent)
+        TagNameFilter(searchBarContent),
+        conjunction.toConjunction()
     )
+
     val images = getImagesByDate(filters)
 
     LazyColumn(
