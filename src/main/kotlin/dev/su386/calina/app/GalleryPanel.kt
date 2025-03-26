@@ -45,13 +45,14 @@ fun GalleryPanel() {
 fun GalleryWaterfall(modifier: Modifier) {
     val listState = rememberLazyListState()
     val searchBarContent = if (searchBarContent.text == "Search...") { "" } else { searchBarContent.text }
-    val tokens = searchBarContent.split(" ")
+    val tokens = searchBarContent.split(" ", "/", "-")
 
     val conjunction = mutableListOf<Filter>()
     tokens.forEach {
         conjunction.add(
             listOf(
-                DayFilter(it),
+                DayOfWeekFilter(it),
+                DayOfMonthFilter(it),
                 MonthFilter(it),
                 YearFilter(it),
                 TagNameFilter(it)
@@ -60,7 +61,8 @@ fun GalleryWaterfall(modifier: Modifier) {
     }
 
     val filters = mutableListOf(
-        DayFilter(searchBarContent),
+        DayOfWeekFilter(searchBarContent),
+        DayOfMonthFilter(searchBarContent),
         MonthFilter(searchBarContent),
         YearFilter(searchBarContent),
         TagNameFilter(searchBarContent),
