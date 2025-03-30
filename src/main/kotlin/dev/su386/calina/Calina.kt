@@ -59,12 +59,12 @@ fun main() {
     register(OnStartTask("Load config task", IO) { CalinaConfig.load(); CalinaConfig.save() })
     register(OnStartTask("Load Image Data", IO) {
         loadImageData()
-        println("Images loaded: ${images.size}\nBytes loaded: ${Calina.bytesLoaded}\nKB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
+        println("Images loaded: ${images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
         saveImageData()
         saveTags()
     })
     register(OnStartTask("Cleaning Icons") {
-        cleanOrphanedIcons().also { println("Orphans Deleted: ${it.first}, Orphan Space Liberated: ${it.second / 1000}MB") }
+        cleanOrphanedIcons().also { println("Orphans Deleted: ${it.first}, Orphan Space Liberated: ${it.second / 1000}KB") }
         images.values.forEach { it.cleanIconPath() }
     })
 
