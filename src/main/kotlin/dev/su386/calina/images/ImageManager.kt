@@ -1,10 +1,12 @@
 package dev.su386.calina.images
 
+import dev.su386.calina.data.Database
 import dev.su386.calina.data.Database.readData
 import dev.su386.calina.data.Database.writeData
 import dev.su386.calina.images.ImageData.Companion.toImageData
 import dev.su386.calina.images.filters.Filter
 import dev.su386.calina.images.filters.FilterJunction.Companion.toDisJunction
+import dev.su386.calina.utils.FileUtils.safelyDelete
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.flow.asFlow
@@ -116,6 +118,20 @@ object ImageManager {
         images.forEach { (_, imageData) ->
             imageData.cleanFilePaths()
         }
+    }
+
+    /**
+     * Cleans all icons in the icon folder that do not have an image referencing it
+     *
+     * @return the numbers of orphans deleted
+     */
+    fun cleanOrphanedIcons(): Int {
+        var orphanedIcons = 0
+        val iconPath = File("${Database.PATH}/icons/")
+        iconPath.walk()
+            .filter { !images.containsKey(it.nameWithoutExtension) }
+            .forEach { it.safelyDelete(); orphanedIcons++ }
+        return orphanedIcons
     }
 
     /**

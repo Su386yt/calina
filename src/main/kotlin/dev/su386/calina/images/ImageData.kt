@@ -6,6 +6,7 @@ import com.drew.metadata.exif.ExifSubIFDDirectory
 import com.drew.metadata.exif.GpsDirectory
 import dev.su386.calina.Calina
 import dev.su386.calina.data.Database
+import dev.su386.calina.utils.FileUtils.safelyDelete
 import dev.su386.calina.utils.HashingImageInputStream
 import dev.su386.calina.utils.Location
 import kotlinx.coroutines.*
@@ -92,7 +93,7 @@ class ImageData(
                 return this.icon
             }
         } else {
-            var image = BufferedImage(32, 32, BufferedImage.TYPE_INT_RGB)
+            var image: BufferedImage? = null
             try {
                 for (file in filePaths){
                     // Create an input stream for the image file.
@@ -131,7 +132,8 @@ class ImageData(
             } catch (e: Exception) {
                 println("Error creating icon for ${this.filePaths.firstOrNull()}: ${e.message}")
             }
-            return image
+
+            return image ?: BufferedImage(32, 32, BufferedImage.TYPE_INT_RGB)
         }
     }
 
@@ -163,6 +165,18 @@ class ImageData(
         this.filePaths = this.filePaths.filter { path -> File(path).exists() }.toTypedArray()
         return oldLength - filePaths.size
     }
+
+    /**
+     * Checks whether the file in [imageIconPath] exists, and removes them if they do not
+     *
+     * @return true if a file was removed, else otherwise
+     */
+    fun cleanIconPath(): Boolean {
+        val file = File(imageIconPath ?: return false)
+        return file.exists().also {file.safelyDelete() }
+    }
+
+
 
     /**
      * Checks whether the file in [filePaths] refers to the same file, and removes them if they do not

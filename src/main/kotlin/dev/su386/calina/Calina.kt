@@ -12,6 +12,7 @@ import dev.su386.calina.Calina.applicationScope
 import dev.su386.calina.Calina.exitAppSafely
 import dev.su386.calina.app.App
 import dev.su386.calina.images.ImageManager.cleanMissingImages
+import dev.su386.calina.images.ImageManager.cleanOrphanedIcons
 import dev.su386.calina.images.ImageManager.images
 import dev.su386.calina.images.ImageManager.loadImageData
 import dev.su386.calina.images.ImageManager.readImageData
@@ -20,11 +21,9 @@ import dev.su386.calina.images.Tag.Companion.saveTags
 import dev.su386.calina.tasks.OnCloseTask
 import dev.su386.calina.tasks.OnStartTask
 import dev.su386.calina.tasks.RepeatTask
-import dev.su386.calina.tasks.RepeatTask.TaskCooldown.Companion.ms
 import dev.su386.calina.tasks.TaskManager
 import dev.su386.calina.tasks.TaskManager.onStart
 import dev.su386.calina.tasks.TaskManager.register
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers.IO
 import java.util.concurrent.atomic.AtomicLong
 import javax.imageio.ImageIO
@@ -64,6 +63,10 @@ fun main() {
         saveImageData()
         saveTags()
     })
+    register(OnStartTask("Cleaning Icons") {
+        cleanOrphanedIcons()
+        images.values.forEach { it.cleanIconPath() }
+    })
 
     register(RepeatTask(
         taskName = "Clean image file paths", taskCooldown = CalinaConfig.get<Long>("performance/imageHashTimeout") * 60L * 1000L,
@@ -82,6 +85,7 @@ fun main() {
         saveImageData()
         println("Images loaded: ${images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
     })
+
 
     register(OnCloseTask("Save config task", IO) { CalinaConfig.save() })
     register(OnCloseTask("Save Image Data", IO) { saveImageData(); saveTags() })
