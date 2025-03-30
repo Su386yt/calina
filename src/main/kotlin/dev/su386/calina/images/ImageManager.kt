@@ -125,13 +125,14 @@ object ImageManager {
      *
      * @return the numbers of orphans deleted
      */
-    fun cleanOrphanedIcons(): Int {
+    fun cleanOrphanedIcons(): Pair<Int, Long> {
         var orphanedIcons = 0
+        var orphanedIconSpace = 0L
         val iconPath = File("${Database.PATH}/icons/")
         iconPath.walk()
             .filter { !images.containsKey(it.nameWithoutExtension) }
-            .forEach { it.safelyDelete(); orphanedIcons++ }
-        return orphanedIcons
+            .forEach { it.safelyDelete().also { deleted -> if (deleted) orphanedIcons++; orphanedIconSpace += it.length() } }
+        return Pair(orphanedIcons, orphanedIconSpace)
     }
 
     /**

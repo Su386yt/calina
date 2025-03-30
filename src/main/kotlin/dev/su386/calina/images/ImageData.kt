@@ -76,7 +76,7 @@ class ImageData(
     }
 
     val icon: BufferedImage get() {
-        val path = imageIconPath ?: "${Database.PATH}/icons/$hash.png".also { imageIconPath = it }
+        val path = imageIconPath ?: "${Database.PATH}/icons/${hash}.png".also { imageIconPath = it }
         val iconFile = File(path).also { it.parentFile.mkdirs() }
         iconFile.setWritable(true)
         if (iconFile.exists()) {
@@ -133,7 +133,7 @@ class ImageData(
                 println("Error creating icon for ${this.filePaths.firstOrNull()}: ${e.message}")
             }
 
-            return image ?: BufferedImage(32, 32, BufferedImage.TYPE_INT_RGB)
+            return image ?: BufferedImage(imageSize.compressedImageSize.x, imageSize.compressedImageSize.y, BufferedImage.TYPE_INT_RGB)
         }
     }
 
@@ -173,7 +173,7 @@ class ImageData(
      */
     fun cleanIconPath(): Boolean {
         val file = File(imageIconPath ?: return false)
-        return file.exists().also {file.safelyDelete() }
+        return file.exists().also { if (!it) this.imageIconPath = null }
     }
 
 
