@@ -177,7 +177,6 @@ class ImageData(
     }
 
 
-
     /**
      * Checks whether the file in [filePaths] refers to the same file, and removes them if they do not
      *
