@@ -1,5 +1,6 @@
 package dev.su386.calina.data
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
@@ -18,6 +19,7 @@ object Database {
     val PATH = "${System.getProperty("user.home")}/calina"
     val JSON = jacksonObjectMapper().apply {
         registerKotlinModule()
+        setSerializationInclusion(JsonInclude.Include.ALWAYS)
         setDefaultPrettyPrinter(DefaultPrettyPrinter().apply {
             indentArraysWith(DefaultIndenter("  ", "\n"))
             indentObjectsWith(DefaultIndenter("  ", "\n"))
@@ -48,10 +50,16 @@ object Database {
     fun writeData(path: String, data: Any) {
         val file = File("$PATH/${path.trim('/', '.')}")
         Files.createDirectories(file.toPath().parent)
-        file.createNewFile()
-        file.setWritable(true)
 
-        JSON.writerWithDefaultPrettyPrinter().writeValue(file, data)
+        try {
+            file.outputStream().bufferedWriter().use { writer ->
+                JSON.factory.createGenerator(writer).use { jsonGenerator ->
+                    JSON.writerWithDefaultPrettyPrinter().writeValue(jsonGenerator, data)
+                }
+            }
+        } catch (e: Exception) {
+            println("Error writing data: ${e.message}")
+        }
     }
 
     /**
