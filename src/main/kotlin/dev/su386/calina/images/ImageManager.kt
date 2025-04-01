@@ -121,6 +121,17 @@ object ImageManager {
     }
 
     /**
+     * Returns the total number of images removed
+     */
+    fun cleanSingleImages(): Int {
+        return images.filter { (_, imageData) ->
+            imageData.filePaths.isEmpty()
+        }.onEach { (key, _) ->
+            images.remove(key)
+        }.count()
+    }
+
+    /**
      * Cleans all icons in the icon folder that do not have an image referencing it
      *
      * @return the numbers of orphans deleted

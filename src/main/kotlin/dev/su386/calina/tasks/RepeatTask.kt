@@ -12,7 +12,6 @@ import java.util.*
  *
  * @param taskName - Name of the task
  * @param taskCooldown - Time in ms between the executing of each task
- * @param persistentCooldown - Whether the cooldown time is saved on restarts. If true, and an app is restarted, the time since last active will save
  * @param startImmediately - Whether the scheduled task should run the first time immediately or wait the cooldown
  * @param coroutineDispatcher - Dispatcher context to run the [onRun] function in
  * @param onRun - What to run when the task is called

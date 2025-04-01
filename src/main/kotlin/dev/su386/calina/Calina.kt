@@ -13,6 +13,7 @@ import dev.su386.calina.Calina.exitAppSafely
 import dev.su386.calina.app.App
 import dev.su386.calina.images.ImageManager.cleanMissingImages
 import dev.su386.calina.images.ImageManager.cleanOrphanedIcons
+import dev.su386.calina.images.ImageManager.cleanSingleImages
 import dev.su386.calina.images.ImageManager.images
 import dev.su386.calina.images.ImageManager.loadImageData
 import dev.su386.calina.images.ImageManager.readImageData
@@ -68,10 +69,10 @@ fun main() {
 
     register(RepeatTask(
         taskName = "Clean image file paths", taskCooldown = CalinaConfig.get<Long>("performance/imageHashTimeout") * 60L * 1000L,
-        startImmediately = false,
-        persistentCooldown = true
+        startImmediately = true,
     ) {
         cleanMissingImages()
+        cleanSingleImages().also { it2 -> println("Single image data deleted: $it2") }
         it.duration = CalinaConfig.get<Long>("performance/imageHashTimeout") * 60L * 1000L
         println("Cleaned nonexistent images")
     })

@@ -6,11 +6,14 @@ import com.drew.metadata.exif.ExifSubIFDDirectory
 import com.drew.metadata.exif.GpsDirectory
 import dev.su386.calina.Calina
 import dev.su386.calina.data.Database
+import dev.su386.calina.images.ImageData.Companion.toImageData
 import dev.su386.calina.utils.FileUtils.safelyDelete
 import dev.su386.calina.utils.HashingImageInputStream
+import dev.su386.calina.utils.HashingInputStream
 import dev.su386.calina.utils.Location
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
+import org.apache.commons.imaging.Imaging
 import java.awt.image.BufferedImage
 import java.io.File
 import java.io.FileInputStream
@@ -21,6 +24,7 @@ import java.security.MessageDigest
 import java.util.*
 import javax.imageio.ImageIO
 import javax.imageio.ImageReadParam
+import javax.imageio.stream.ImageInputStream
 
 private const val COMPRESSED_IMAGE_SIZE = 240
 
@@ -29,11 +33,26 @@ class ImageData(
     val date: Long,
     val hash: String,
     val cameraInfo: CameraInfo,
-    val imageSize: ImageSize,
+    private var cachedImageSize: ImageSize?,
     vararg var filePaths: String
 ) {
     private var imageIconPath: String? = null
+    val imageSize: ImageSize get() {
+        val cache = cachedImageSize
+        if (cache != null) {
+            return cache
+        } else {
+            var imageSize: ImageSize? = null
+            try {
+                val im = Imaging.getImageSize(File(this.filePaths.firstOrNull()))
+                imageSize = ImageSize(im.width, im.height)
+            } catch (_: Exception) {
 
+            }
+
+            return imageSize.also { cachedImageSize = it } ?: ImageSize(32, 32)
+        }
+    }
     /**
      * Returns the image associated with this image data.
      *
@@ -104,13 +123,9 @@ class ImageData(
                     val reader = readers.next()
                     reader.input = imageInputStream
 
-                    // Get original dimensions.
-                    val originalWidth = reader.getWidth(0)
-                    val originalHeight = reader.getHeight(0)
-
                     // Calculate a subsampling factor (an integer >= 1).
                     var subsampling = 1
-                    while ((originalWidth / subsampling) > this.imageSize.compressedImageSize.x && (originalHeight / subsampling) > this.imageSize.compressedImageSize.y) {
+                    while ((imageSize.x / subsampling) > this.imageSize.compressedImageSize.x && (imageSize.y / subsampling) > this.imageSize.compressedImageSize.y) {
                         subsampling++
                     }
                     // If subsampling overshoots, step back one.
@@ -250,17 +265,13 @@ class ImageData(
         suspend fun File.toImageData(): ImageData = withContext(IO) {
             val messageDigest = MessageDigest.getInstance("SHA-256")
 
-            var imageSize = ImageSize(32, 32)
-            val imageInputStream = ImageIO.createImageInputStream(this@toImageData)
-            val hashingInputStream = HashingImageInputStream(imageInputStream, messageDigest)
+            val hashingInputStream = HashingInputStream(this@toImageData.inputStream().buffered(), messageDigest)
+            var imageSize: ImageSize? = null
+            try {
+                val im = Imaging.getImageSize(this@toImageData)
+                imageSize = ImageSize(im.width, im.height)
+            } catch (_: Exception) {
 
-            val imageReaders = ImageIO.getImageReaders(hashingInputStream)
-            if (imageReaders.hasNext()) {
-                val reader = imageReaders.next()
-                reader.setInput(hashingInputStream, true)
-
-                imageSize = ImageSize(reader.getWidth(reader.minIndex), reader.getHeight(reader.minIndex))
-                reader.dispose()
             }
 
             // Ensure the entire stream is read
