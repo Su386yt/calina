@@ -141,7 +141,7 @@ object ImageManager {
         var orphanedIconSpace = 0L
         val iconPath = File("${Database.PATH}/icons/")
         iconPath.walk()
-            .filter { !images.containsKey(it.nameWithoutExtension) }
+            .filter { !images.containsKey(it.nameWithoutExtension) || it.length() == 0L}
             .forEach { it.safelyDelete().also { deleted -> if (deleted) orphanedIcons++; orphanedIconSpace += it.length() } }
         return Pair(orphanedIcons, orphanedIconSpace)
     }
