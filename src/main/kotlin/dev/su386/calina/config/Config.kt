@@ -1,8 +1,21 @@
 package dev.su386.calina.config
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.material.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
+import dev.su386.calina.utils.AutoResizeText
 
 open class Config(
     name: String,
@@ -14,6 +27,137 @@ open class Config(
 
     final override val value: Config = this
     private val previousPathMap: MutableMap<String, Array<String>> = mutableMapOf()
+
+    @Composable
+    override fun getComposable() {
+        getComposable(
+            modifier = Modifier,
+            sublevel = 0
+        )
+    }
+
+    @Composable
+    fun getComposable(
+        modifier: Modifier = Modifier,
+        sublevel: Int = 0
+    ) {
+        val options = remember { this.map }
+        val displayName = remember { this.name }
+        val description = remember { this.name }
+
+        MaterialTheme {
+            when (sublevel) {
+                0 -> {
+                    LazyColumn(
+                        modifier = modifier,
+                        horizontalAlignment = Alignment.Start,
+                    ) {
+                        item {
+                            AutoResizeText(
+                                text = name,
+                                modifier = Modifier
+                                    .padding(20.dp)
+                                    .fillMaxWidth()
+                                    .height(50.dp),
+                                color = MaterialTheme.colors.onBackground,
+                                align = Alignment.CenterStart,
+                            )
+                        }
+                        options.values
+                            .sortedBy { it.name }
+                            .forEach { option ->
+                                item {
+                                    if (option is Config) {
+                                        option.getComposable(sublevel = sublevel + 1)
+                                    }
+                                    else {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(30.dp)
+                                        ) {
+                                            option.getComposable()
+                                        }
+                                    }
+                                }
+
+                            }
+                    }
+                }
+                1 -> {
+                    Box(
+                        modifier = modifier
+                            .padding(vertical = 3.dp, horizontal = 16.dp)
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Min)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(MaterialTheme.colors.surface)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .padding(vertical = 3.dp, horizontal = 16.dp)
+                                .fillMaxWidth(),
+                            horizontalAlignment = Alignment.Start,
+                        ) {
+                            AutoResizeText(
+                                text = displayName,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(40.dp),
+                                color = MaterialTheme.colors.onBackground,
+                                align = Alignment.CenterStart,
+                            )
+
+                            Column (
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                            ) {
+                                options.values
+                                    .sortedBy { it.name }
+                                    .forEach { option ->
+                                        Box(
+                                            modifier = Modifier
+                                                .padding(horizontal = 5.dp)
+                                                .fillMaxWidth()
+                                                .height(35.dp * option.size),
+                                        ) {
+                                            if (option is Config) {
+                                                option.getComposable(sublevel = sublevel + 1)
+                                            }
+                                            option.getComposable()
+                                        }
+                                    }
+                            }
+                        }
+                    }
+
+                }
+                else -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(30.dp),
+                        horizontalAlignment = Alignment.Start,
+                    ) {
+                        AutoResizeText(
+                            text = displayName,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillMaxHeight(.75f)
+                        )
+
+                        AutoResizeText(
+                            text = description,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillMaxHeight(.25f)
+                        )
+                    }
+                }
+            }
+
+        }
+    }
 
     override fun loadFromJson(jsonNode: JsonNode) {
         val obj = if (jsonNode.isObject) {

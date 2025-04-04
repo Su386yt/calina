@@ -3,10 +3,11 @@ package dev.su386.calina
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import dev.su386.calina.config.Config
+import dev.su386.calina.config.Paragraph
 import dev.su386.calina.config.StringList
 import dev.su386.calina.data.Database
 
-object CalinaConfig: Config("Calina", "") {
+object CalinaConfig: Config("Settings", "") {
     private const val PATH = "config.json"
 
     init {
@@ -18,6 +19,7 @@ object CalinaConfig: Config("Calina", "") {
             ),
             "imageFolders" // Backwards compatibility from the previous config library
         )
+
         this["gallery"].name = "Gallery"
     }
 

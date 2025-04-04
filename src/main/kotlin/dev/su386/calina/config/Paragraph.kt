@@ -4,9 +4,7 @@ import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
 import androidx.compose.material.TextField
-import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,30 +14,23 @@ import androidx.compose.ui.unit.dp
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import dev.su386.calina.utils.AutoResizeText
 
-class StringList(
+class Paragraph(
     name: String,
     description: String,
-    defaultValue: MutableList<String> = mutableListOf(),
-    vararg defaultValues: String
+    defaultValue: String = ""
 ) : ConfigOption(
     name,
     description,
     size = 2f
 ) {
-    override val value: MutableList<String> = defaultValue
+    override var value: String = defaultValue
 
-    init {
-        for (value in defaultValues) {
-            this.value.add(value)
-        }
-    }
-
-    @Preview
     @Composable
     override fun getComposable() {
-        val list by remember { mutableStateOf(this.value) }
+        var state by remember { mutableStateOf(this.value) }
         var isError by remember { mutableStateOf(false) }
 
         Box(
@@ -51,11 +42,6 @@ class StringList(
                 modifier = Modifier
                     .fillMaxSize(),
             ) {
-                val text = mutableStateOf(StringBuilder().apply {
-                    for (s in list) {
-                        append("\"$s\", ")
-                    }
-                }.toString())
                 Column(
                     modifier = Modifier
                         .fillMaxHeight(),
@@ -70,26 +56,14 @@ class StringList(
                         align = Alignment.CenterStart,
                     )
                 }
+
                 TextField(
-                    value = text.value,
-                    onValueChange = { it ->
-                        text.value = it
+                    value = state,  // Use state directly here
+                    onValueChange = { newText ->
                         try {
-                            val split = mutableListOf(*it.split(", ").toTypedArray())
-                            for (i in split.indices) {
-                                split[i] = split[i].trim().trim('"', ',')
-                            }
-
-                            value.clear()
-                            for (i in split.indices) {
-                                if (split[i].isEmpty()) {
-                                    continue
-                                }
-                                value.add(split[i])
-                            }
-
+                            state = newText  // Update state directly
                             isError = false
-                        } catch (e:Exception){
+                        } catch (e: Exception) {
                             isError = true
                         }
                     },
@@ -103,20 +77,14 @@ class StringList(
     }
 
 
+
     override fun loadFromJson(jsonNode: JsonNode) {
-        val array = jsonNode as ArrayNode
-        for (item in array) {
-            value.add(item.asText().toString())
-        }
+
+        this.value = jsonNode.asText("")
+
     }
 
     override fun saveToJson(): JsonNode {
-        val obj = JsonNodeFactory.instance.arrayNode()
-
-        for (en in value) {
-            obj.add(en)
-        }
-
-        return obj
+        return JsonNodeFactory.instance.textNode(value)
     }
 }

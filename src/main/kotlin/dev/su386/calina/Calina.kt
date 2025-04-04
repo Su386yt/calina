@@ -1,14 +1,13 @@
 package dev.su386.calina
 
-import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
-import androidx.compose.runtime.*
+import androidx.compose.material.darkColors
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import com.fasterxml.jackson.databind.JsonNode
-import dev.su386.calina.data.Database
+import dev.su386.calina.app.App
 import dev.su386.calina.images.ImageManager
 import dev.su386.calina.images.ImageManager.loadImageData
 import dev.su386.calina.images.ImageManager.readImageData
@@ -22,19 +21,28 @@ import java.util.concurrent.atomic.AtomicLong
 
 
 @Composable
-@Preview
-fun App() {
-    var text by remember { mutableStateOf("Hello, World!") }
-
-    MaterialTheme {
-        Button(onClick = {
-            text = "Hello, Desktop!"
-        }) {
-            Text(text)
-        }
+fun CalinaTheme(content: @Composable () -> Unit) {
+    val colors = remember {
+        darkColors(
+            primary = Color(0xFF2f65b7),
+            primaryVariant = Color(0xFF4e75bf),
+            secondary = Color(0xFFABA2EE),
+            background = Color(0xFF080019),
+            surface = Color(0xFF211e2e),
+            error = Color(0xFFC14953),
+            onPrimary = Color(0xFF2F2F2F),
+            onSecondary = Color(0xFF101935),
+            onBackground = Color(0xFFFFFFFF),
+            onSurface = Color(0xFFFFFFFF),
+            onError = Color(0xFF2F2F2F)
+        )
     }
-}
 
+    MaterialTheme( // line 29
+        colors = colors,
+        content = content
+    )
+}
 
 @OptIn(DelicateCoroutinesApi::class)
 fun main() {
@@ -60,7 +68,7 @@ fun main() {
     // Now start the UI without blocking the background tasks
     application {
         Window(onCloseRequest = ::exitApplication) {
-            MaterialTheme {
+            CalinaTheme {
                 App()
             }
         }
