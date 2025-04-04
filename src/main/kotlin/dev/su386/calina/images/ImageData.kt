@@ -6,25 +6,21 @@ import com.drew.metadata.exif.ExifSubIFDDirectory
 import com.drew.metadata.exif.GpsDirectory
 import dev.su386.calina.Calina
 import dev.su386.calina.data.Database
-import dev.su386.calina.images.ImageData.Companion.toImageData
-import dev.su386.calina.utils.FileUtils.safelyDelete
 import dev.su386.calina.utils.HashingImageInputStream
 import dev.su386.calina.utils.HashingInputStream
 import dev.su386.calina.utils.Location
-import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.withContext
 import org.apache.commons.imaging.Imaging
 import java.awt.image.BufferedImage
 import java.io.File
 import java.io.FileInputStream
-import java.nio.MappedByteBuffer
 import java.nio.file.Files
 import java.nio.file.attribute.BasicFileAttributes
 import java.security.MessageDigest
 import java.util.*
 import javax.imageio.ImageIO
 import javax.imageio.ImageReadParam
-import javax.imageio.stream.ImageInputStream
 
 private const val COMPRESSED_IMAGE_SIZE = 240
 
@@ -37,6 +33,7 @@ class ImageData(
     vararg var filePaths: String
 ) {
     private var imageIconPath: String? = null
+    var timeSinceLastHashCheck: Long = 0L
     val imageSize: ImageSize get() {
         val cache = cachedImageSize
         if (cache != null) {
@@ -74,21 +71,17 @@ class ImageData(
                 }
 
                 // Ensure the entire stream is read
-                val buffer = ByteArray(64 * 1024)
-                while (hashingInputStream.read(buffer) != -1) {
-                    // Continue reading to the end to include all bytes in the hash
-                }
+                hashingInputStream.readTillEnd()
                 val hash = messageDigest.digest().joinToString("") { "%02x".format(it) }
                 // Compute the hash now that we've read all bytes
                 hashingInputStream.close()
 
                 if (this.hash == hash && image != null){
-//                    totalLoaded++
-                    return image
+                    return image.also { imageInputStream.close() }
                 }
             }
         } catch (e: Exception) {
-            println("Error loading icon for ${this.filePaths.firstOrNull()}: ${e.message}")
+            println("Error loading image for ${this.filePaths.firstOrNull()}: ${e.message}")
         }
 
         return BufferedImage(32, 32, BufferedImage.TYPE_INT_RGB)
@@ -197,24 +190,28 @@ class ImageData(
      *
      * @return The number of file paths removed
      */
-    suspend fun checkFileHashes(): Int = runBlocking<Int> {
-        val jobs = mutableListOf<Deferred<Unit>>()
-        val cleanedPaths = mutableListOf<String>()
-        val oldLength = this@ImageData.filePaths.size
-
-        this@ImageData.filePaths.forEach { path ->
-            jobs.add(async(IO) {
-                if (File(path).inputStream().parallelSHA256() == this@ImageData.hash) {
-                    cleanedPaths.add(path)
+    fun checkFileHashes(): Int {
+        val validPaths = mutableSetOf<String>()
+        this.filePaths
+            .forEach {
+                if (File(it).lastModified() < this.timeSinceLastHashCheck) {
+                    validPaths.add(it)
+                    return@forEach
                 }
-            })
-        }
 
-        jobs.awaitAll()
+                val digest = MessageDigest.getInstance("SHA-256")
+                val inputStream = HashingInputStream(FileInputStream(it), digest)
+                inputStream.readAllBytes()
+                inputStream.close()
+                val hash = digest.digest().joinToString("") { "%02x".format(it) }
+                if (hash == this.hash) {
+                    validPaths.add(it)
+                }
 
-        this@ImageData.filePaths = cleanedPaths.toTypedArray()
+                this.timeSinceLastHashCheck = System.currentTimeMillis()
+            }
 
-        return@runBlocking oldLength - this@ImageData.filePaths.size
+        return (this.filePaths.size - validPaths.size).also{ this.filePaths = validPaths.toTypedArray() }
     }
 
     override fun toString(): String {
@@ -222,40 +219,6 @@ class ImageData(
     }
 
     companion object {
-        /**
-         * Returns an SHA-256 hash of the byte array
-         */
-        suspend fun FileInputStream.parallelSHA256(): String {
-            val chunkSize = 4L * 1024L * 1024L // 4MB chunks
-            val digest = MessageDigest.getInstance("SHA-256")
-
-            return withContext(IO) {
-                val channel = this@parallelSHA256.channel
-                val fileSize = channel.size()
-
-                val results = (0 until fileSize step chunkSize).map { start ->
-                    async {
-                        val size = minOf(chunkSize, fileSize - start)
-                        val mappedBuffer: MappedByteBuffer = channel.map(
-                            java.nio.channels.FileChannel.MapMode.READ_ONLY,
-                            start,
-                            size
-                        )
-
-                        val buffer = ByteArray(mappedBuffer.remaining())
-                        mappedBuffer.get(buffer)
-                        buffer //Return the buffer.
-                    }
-                }.awaitAll()
-
-                results.forEach{buffer ->
-                    digest.update(buffer)
-                }
-
-                digest.digest().joinToString("") { "%02x".format(it) }
-            }
-        }
-
         /**
          * Returns the image data at that path.
          * If no metadata exists in an image, it returns a metadata with default values.
@@ -325,7 +288,8 @@ class ImageData(
                     cameraInfo = CameraInfo(cameraModel),
                     imageSize,
                     this@toImageData.path,
-                )
+                ).apply { this.timeSinceLastHashCheck = System.currentTimeMillis() }
+                    .also { input.close() }
             }
         }
     }

@@ -1,5 +1,6 @@
 package dev.su386.calina.images
 
+import dev.su386.calina.CalinaConfig
 import dev.su386.calina.data.Database
 import dev.su386.calina.data.Database.readData
 import dev.su386.calina.data.Database.writeData
@@ -114,10 +115,12 @@ object ImageManager {
     /**
      * Removes all images whose paths do not exist
      */
-    fun cleanMissingImages() {
+    fun cleanMissingImages(): Int {
+        var i = 0
         images.forEach { (_, imageData) ->
-            imageData.cleanFilePaths()
+            i += imageData.cleanFilePaths()
         }
+        return i
     }
 
     /**
@@ -151,14 +154,20 @@ object ImageManager {
      *
      * @param n - Takes the first [n] images
      */
-    fun cleanWrongImages(n: Int = images.size) = runBlocking(IO) {
-        val jobs = mutableListOf<Deferred<Unit>>()
+    fun cleanWrongImages(n: Int = images.size) = runBlocking (IO) {
+        val jobs = mutableListOf<Deferred<Int>>()
+        images.values
+            .filter { it.timeSinceLastHashCheck < System.currentTimeMillis() - 1000 * 60 * 60 * 24 * CalinaConfig.get<Double>("performance/imageHashTimeout") }
+            .sortedBy { it.timeSinceLastHashCheck }.take(n)
+            .forEach {
+                jobs.add(
+                    async(IO) {
+                        it.checkFileHashes()
+                    }
+                )
+            }
 
-        images.values.take(n).forEach {
-            jobs.add(async(IO) { it.cleanFilePaths(); return@async })
-        }
-
-        jobs.awaitAll()
+        jobs.awaitAll().sum()
     }
 
     fun getImagesByDate(filters: List<Filter> = listOf()): List<List<ImageData>> {

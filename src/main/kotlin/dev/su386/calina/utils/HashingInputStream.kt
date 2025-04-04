@@ -11,6 +11,11 @@ class HashingInputStream(
 
     private var streamPosition: Long = 0
 
+    fun readTillEnd() {
+        while (this.read(ByteArray(64 * 1024)) != -1) {
+        }
+    }
+
     override fun read(): Int {
         val byteRead = inputStream.read()
         if (byteRead != -1) {
