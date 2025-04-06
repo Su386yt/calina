@@ -37,7 +37,7 @@ class HashingInputStream(
     override fun skip(n: Long): Long {
         // We need to read the skipped bytes and update the digest.
         val bufferSize = 64 * 1024 // 64KB buffer
-        val buffer = ByteArray(bufferSize)
+        val buffer = ByteArray(bufferSize)  
 
         var bytesToSkip = n
         var totalBytesSkipped = 0L
