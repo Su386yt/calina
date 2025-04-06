@@ -1,8 +1,22 @@
 package dev.su386.calina.tasks
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.LinearProgressIndicator
+import androidx.compose.material.MaterialTheme
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import dev.su386.calina.Calina.exitAppSafely
+import dev.su386.calina.app.App
+import dev.su386.calina.app.App.navigationStack
 import dev.su386.calina.data.Database
+import dev.su386.calina.utils.AutoResizeText
 import kotlinx.coroutines.*
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.CoroutineContext
+import androidx.compose.material.CircularProgressIndicator as CircularProgressIndicator
 
 @OptIn(DelicateCoroutinesApi::class)
 object TaskManager {
@@ -78,19 +92,48 @@ object TaskManager {
     }
 
     fun onStart() {
-        runBlocking {
-            val jobs = mutableListOf<Deferred<Unit>>()
+        val tasksCompleted by mutableStateOf(AtomicInteger(0))
 
-            val filteredTasks = tasks
-                .filterIsInstance<OnStartTask>()
+        val jobs = mutableListOf<Deferred<Unit>>()
 
-            tasks.removeAll(filteredTasks)
-            val count = filteredTasks.size
-            filteredTasks.forEach { jobs.add(it.runBlocking(this@runBlocking)) }
+        val filteredTasks = tasks
+            .filterIsInstance<OnStartTask>()
 
+        tasks.removeAll(filteredTasks)
+        val count = filteredTasks.size
+
+        navigationStack.add {
+            Column(
+                Modifier.fillMaxSize()
+                    .background(MaterialTheme.colors.surface),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                AutoResizeText(
+                    "Loading ${tasksCompleted.get()}/$count tasks",
+                    modifier = Modifier.height(50.dp)
+                        .fillMaxWidth(),
+                    color = MaterialTheme.colors.onSurface,
+                )
+                Box(
+                    modifier = Modifier.height(25.dp)
+                )
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .height(80.dp)
+                        .aspectRatio(1f),
+                    color = MaterialTheme.colors.primary,
+                    backgroundColor = MaterialTheme.colors.background,
+                )
+            }
+        }
+
+        GlobalScope.launch {
+            filteredTasks.forEach { jobs.add(it.runBlocking(this) { tasksCompleted.incrementAndGet() } ) }
             jobs.awaitAll()
             starting = false
             println("Completed running $count start-up tasks")
+            App.closeAllPopups()
         }
     }
 

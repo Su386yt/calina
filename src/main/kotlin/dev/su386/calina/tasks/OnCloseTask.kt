@@ -22,10 +22,11 @@ class OnCloseTask(
     onRun = onRun
 ) {
     override val runAt = Long.MAX_VALUE
-    fun runBlocking(scope: CoroutineScope): Deferred<Unit> {
+    fun runBlocking(scope: CoroutineScope, also: (OnCloseTask) -> Unit = {}): Deferred<Unit> {
         println("Running task ${this.taskName}")
         return scope.async(coroutineDispatcher) {
             onRun()
+            also(this@OnCloseTask)
         }
 
     }

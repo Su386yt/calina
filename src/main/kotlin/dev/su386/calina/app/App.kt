@@ -24,6 +24,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import dev.su386.calina.app.App.activeIndex
+import dev.su386.calina.app.App.navigationStack
 import dev.su386.calina.app.App.panels
 import dev.su386.calina.app.App.searchBarContent
 import dev.su386.calina.utils.AutoResizeText
@@ -33,44 +34,63 @@ import dev.su386.calina.utils.AutoResizeText
 @Preview
 fun App() {
     val focusManager = LocalFocusManager.current
-    Row(
+    val stack = remember { navigationStack }
+    Box(
         modifier = Modifier
-            .fillMaxSize(1f)
-            .background(MaterialTheme.colors.background)
-            .focusable(true)
-            .onClick {
-                focusManager.clearFocus()
-            },
+            .fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
-        // Nav Rail
-        Column {
-            // Nav Bar Box
-            Box(modifier = Modifier
-                .fillMaxHeight()
-                .width(75.dp)
-            ) {
-                NavRail(
-                    modifier = Modifier
-                        .padding(start = 2.dp, end = 6.dp, top = 3.dp, bottom = 3.dp),
-                    iconsData = panels.toTypedArray(),
-                )
+        Row(
+            modifier = Modifier
+                .fillMaxSize(1f)
+                .background(MaterialTheme.colors.background)
+                .focusable(true)
+                .onClick {
+                    focusManager.clearFocus()
+                },
+        ) {
+            // Nav Rail
+            Column {
+                // Nav Bar Box
+                Box(modifier = Modifier
+                    .fillMaxHeight()
+                    .width(75.dp)
+                ) {
+                    NavRail(
+                        modifier = Modifier
+                            .padding(start = 2.dp, end = 6.dp, top = 3.dp, bottom = 3.dp),
+                        iconsData = panels.toTypedArray(),
+                    )
 
+                }
+            }
+
+            // Display
+            Column(
+                horizontalAlignment = Alignment.Start,
+            ) {
+                Box(modifier = Modifier
+                    .padding(5.dp)
+                    .fillMaxHeight()
+                    .fillMaxWidth()
+                ) {
+                    NavigationWindow(modifier = Modifier.fillMaxSize())
+                }
             }
         }
-
-        // Display
-        Column(
-            horizontalAlignment = Alignment.Start,
-        ) {
-            Box(modifier = Modifier
-                .padding(5.dp)
-                .fillMaxHeight()
-                .fillMaxWidth()
+        println("Recomposing app")
+        println(stack.size)
+        for (popup in stack) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
-                NavigationWindow(modifier = Modifier.fillMaxSize())
+                println("a")
+                popup()
             }
         }
     }
+
 }
 
 @Composable
@@ -192,4 +212,22 @@ object App {
     )
     var activeIndex by mutableStateOf(0)
     var searchBarContent by mutableStateOf(TextFieldValue("Search..."))
+    val navigationStack = mutableStateListOf<@Composable () -> Unit>()
+
+    fun closePopup() {
+        if (navigationStack.isNotEmpty()) {
+            navigationStack.removeLast()
+        } else {
+            activeIndex = 0
+        }
+    }
+
+    fun closeAllPopups() {
+        navigationStack.clear()
+        activeIndex = 0
+    }
+
+    fun openPopup(popupComposable: @Composable () -> Unit) {
+        navigationStack.add(popupComposable)
+    }
 }
