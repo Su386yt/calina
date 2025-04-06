@@ -1,10 +1,16 @@
 package dev.su386.calina
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.darkColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.ApplicationScope
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
@@ -20,13 +26,12 @@ import dev.su386.calina.images.ImageManager.loadImageData
 import dev.su386.calina.images.ImageManager.readImageData
 import dev.su386.calina.images.ImageManager.saveImageData
 import dev.su386.calina.images.Tag.Companion.saveTags
-import dev.su386.calina.tasks.OnCloseTask
-import dev.su386.calina.tasks.OnStartTask
-import dev.su386.calina.tasks.RepeatTask
-import dev.su386.calina.tasks.TaskManager
+import dev.su386.calina.tasks.*
 import dev.su386.calina.tasks.TaskManager.onStart
 import dev.su386.calina.tasks.TaskManager.register
 import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.atomic.AtomicLong
 import javax.imageio.ImageIO
 
@@ -55,7 +60,7 @@ fun CalinaTheme(content: @Composable () -> Unit) {
     )
 }
 
-fun main() {
+fun main() = runBlocking {
     register(OnStartTask("Check ImageIO Plugins") { ImageIO.scanForPlugins() })
     register(OnStartTask("Hello World Task") { println("Hello World!") })
     register(OnStartTask("Load config task", IO) { CalinaConfig.load(); CalinaConfig.save() })
@@ -92,6 +97,7 @@ fun main() {
     register(OnCloseTask("Save Image Data", IO) { saveImageData(); saveTags() })
 
     onStart()
+
     application {
         applicationScope = this
         Window(onCloseRequest = ::exitAppSafely) {
