@@ -48,8 +48,8 @@ fun CalinaTheme(content: @Composable () -> Unit) {
 fun main() {
     // Launch background tasks in a non-blocking coroutine
     GlobalScope.launch(IO) {
-        println("Hello World!")
         loadImageData()
+        println("Hello World!")
         CalinaConfig.load()
         println("Images loaded: ${ImageManager.images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
 
