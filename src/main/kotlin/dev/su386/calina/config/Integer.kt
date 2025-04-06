@@ -14,20 +14,20 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonPrimitive
 import dev.su386.calina.utils.AutoResizeText
 
-class Paragraph(
+class Integer(
     name: String,
     description: String,
-    defaultValue: String = ""
+    defaultValue: Int = 0
 ) : ConfigOption(
     name,
     description,
-    size = 2f
+    size = 1.5f
 ) {
-    override var value: String = defaultValue
+    override var value: Int = defaultValue
 
     @Composable
     override fun getComposable() {
-        var state by remember { mutableStateOf(this.value) }
+        var text by remember{ mutableStateOf("$value") }
         var isError by remember { mutableStateOf(false) }
 
         Box(
@@ -47,7 +47,7 @@ class Paragraph(
                     AutoResizeText(
                         text = "$name:",
                         modifier = Modifier
-                            .padding(12.dp)
+                            .padding(4.dp)
                             .fillMaxHeight(.5f),
                         color = MaterialTheme.colors.onSurface,
                         align = Alignment.CenterStart,
@@ -55,16 +55,18 @@ class Paragraph(
                 }
 
                 TextField(
-                    value = state,  // Use state directly here
+                    value = text,  // Use state directly here
                     onValueChange = { newText ->
                         try {
-                            state = newText  // Update state directly
-                            isError = false
+                            text = newText
+                            this@Integer.value = newText.toIntOrNull() ?: this@Integer.value
+                            isError = newText.toIntOrNull() == null
                         } catch (e: Exception) {
                             isError = true
+                            e.printStackTrace()
                         }
                     },
-                    maxLines = 2,
+                    maxLines = 1,
                     isError = isError,
                     textStyle = TextStyle(color = MaterialTheme.colors.onSurface),
                     modifier = Modifier.fillMaxSize()
@@ -76,10 +78,10 @@ class Paragraph(
 
 
     override fun loadFromJson(jsonNode: JsonElement) {
-        this.value = jsonNode.asString
+        this.value = jsonNode.asInt
     }
 
     override fun saveToJson(): JsonElement {
-        return JsonPrimitive(value)
+        return JsonPrimitive(this.value)
     }
 }

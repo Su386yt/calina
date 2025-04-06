@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -12,9 +11,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.node.JsonNodeFactory
-import com.fasterxml.jackson.databind.node.ObjectNode
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
 import dev.su386.calina.utils.AutoResizeText
 
 open class Config(
@@ -159,14 +157,14 @@ open class Config(
         }
     }
 
-    override fun loadFromJson(jsonNode: JsonNode) {
-        val obj = if (jsonNode.isObject) {
-            jsonNode as ObjectNode
+    override fun loadFromJson(jsonNode: JsonElement) {
+        val obj = if (jsonNode.isJsonObject) {
+            jsonNode as JsonObject
         } else {
             throw IllegalStateException("Json Node is not a config. $jsonNode")
         }
 
-        for (key in obj.fieldNames()) {
+        for (key in obj.keySet()) {
             if (obj.has(key)) {
                 map[key]?.loadFromJson(obj[key]) ?: continue
             }
@@ -179,8 +177,8 @@ open class Config(
                     val split = trimmedPath.split("/")
                     var newObject = obj
                     for (i in 0..<(split.size - 1)) {
-                        if (newObject.has(split[i]) && newObject[split[i]] is ObjectNode) {
-                            newObject = newObject[split[i]] as ObjectNode
+                        if (newObject.has(split[i]) && newObject[split[i]] is JsonObject) {
+                            newObject = newObject[split[i]] as JsonObject
                         }
                     }
 
@@ -194,11 +192,11 @@ open class Config(
         }
     }
 
-    override fun saveToJson(): JsonNode {
-        val obj = JsonNodeFactory.instance.objectNode()
+    override fun saveToJson(): JsonElement {
+        val obj = JsonObject()
 
         for (en in map.entries) {
-            obj.set<JsonNode>(en.key, en.value.saveToJson())
+            obj.add(en.key, en.value.saveToJson())
         }
 
         return obj

@@ -11,6 +11,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import org.jetbrains.skia.Bitmap
+import org.jetbrains.skiko.toBitmap
+import java.awt.image.BufferedImage
 
 @Composable
 fun AutoResizeText(

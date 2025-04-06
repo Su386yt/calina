@@ -13,9 +13,8 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.node.ArrayNode
-import com.fasterxml.jackson.databind.node.JsonNodeFactory
+import com.google.gson.JsonArray
+import com.google.gson.JsonElement
 import dev.su386.calina.utils.AutoResizeText
 
 class StringList(
@@ -110,15 +109,15 @@ class StringList(
     }
 
 
-    override fun loadFromJson(jsonNode: JsonNode) {
-        val array = jsonNode as ArrayNode
+    override fun loadFromJson(jsonNode: JsonElement) {
+        val array = jsonNode.asJsonArray
         for (item in array) {
-            value.add(item.asText().toString())
+            value.add(item.asString)
         }
     }
 
-    override fun saveToJson(): JsonNode {
-        val obj = JsonNodeFactory.instance.arrayNode()
+    override fun saveToJson(): JsonElement {
+        val obj = JsonArray()
 
         for (en in value) {
             obj.add(en)

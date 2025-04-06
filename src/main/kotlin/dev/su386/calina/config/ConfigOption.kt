@@ -1,7 +1,7 @@
 package dev.su386.calina.config
 
 import androidx.compose.runtime.Composable
-import com.fasterxml.jackson.databind.JsonNode
+import com.google.gson.JsonElement
 
 /**
  * @param name - The display name for the config option
@@ -33,11 +33,11 @@ abstract class ConfigOption(
     /**
      * @param jsonNode
      */
-    abstract fun loadFromJson(jsonNode: JsonNode)
+    abstract fun loadFromJson(jsonNode: JsonElement)
 
 
     /**
      * @return
      */
-    abstract fun saveToJson(): JsonNode
+    abstract fun saveToJson(): JsonElement
 }

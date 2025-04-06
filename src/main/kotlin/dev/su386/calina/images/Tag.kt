@@ -1,6 +1,5 @@
 package dev.su386.calina.images
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import dev.su386.calina.data.Database.readData
 import dev.su386.calina.data.Database.writeData
 import java.util.*
@@ -16,7 +15,7 @@ class Tag(
     }
 
     companion object {
-        @JsonIgnore
+        @Transient
         val tags = mutableMapOf<UUID, Tag>()
 
         /**

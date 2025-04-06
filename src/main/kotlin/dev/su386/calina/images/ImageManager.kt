@@ -3,21 +3,21 @@ package dev.su386.calina.images
 import dev.su386.calina.data.Database.readData
 import dev.su386.calina.data.Database.writeData
 import dev.su386.calina.images.ImageData.Companion.toImageData
+import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 object ImageManager {
     private const val FILE_PATH = "/image/imagedata.json"
-    private val acceptedFileTypes = arrayOf("jpg", "jpeg", "png", "gif", "bmp", "tiff", "webp", "tif", "heic", "mp4", "avi", "mov", "dng","arw")
+    private val acceptedFileTypes = arrayOf("jpg", "jpeg", "png", "gif", "bmp", "tiff", "webp", "tif"/*, "heic", "mp4", "avi", "mov", "dng","arw"*/)
 
     val images: MutableMap<String, ImageData> = ConcurrentHashMap()
     private val loadedPaths = mutableSetOf<String>()
@@ -53,6 +53,7 @@ object ImageManager {
                             }
                             emit(Unit)
                         } catch (e: Exception) {
+                            e.printStackTrace()
                             println("Error processing file ${file.path}: ${e.message}")
                         }
                     }
@@ -79,7 +80,7 @@ object ImageManager {
         imageData.tags.addAll(
             Tag.tags.values
                 .filter { it.imageHashes.contains(imageData.hash) }
-                .mapNotNull { it.uuid }
+                .mapNotNull {  it.uuid }
         )
 
         loadedPaths.addAll(imageData.filePaths)
@@ -92,7 +93,6 @@ object ImageManager {
      */
     fun loadImageData() {
         val imageSet = readData<MutableSet<ImageData>>(this.FILE_PATH) ?: mutableSetOf()
-
         for (image in imageSet){
             registerImage(image)
         }
@@ -105,5 +105,65 @@ object ImageManager {
      */
     fun saveImageData(){
         writeData(this.FILE_PATH, images.values.toTypedArray())
+    }
+
+    /**
+     * Removes all images whose paths do not exist
+     */
+    fun cleanMissingImages() {
+        images.forEach { (_, imageData) ->
+            imageData.cleanFilePaths()
+        }
+    }
+
+    /**
+     * Removes all images whose files do not match their hash
+     *
+     * @param n - Takes the first [n] images
+     */
+    fun cleanWrongImages(n: Int = images.size) = runBlocking(IO) {
+        val jobs = mutableListOf<Deferred<Unit>>()
+
+        images.values.take(n).forEach {
+            jobs.add(async(IO) { it.cleanFilePaths(); return@async })
+        }
+
+        jobs.awaitAll()
+    }
+
+    fun getImagesByDate(): List<List<ImageData>> {
+        val timeZone = TimeZone.getDefault()
+        val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).apply {
+            setTimeZone(timeZone)
+        }
+
+        // Group events by formatted date (considering timezone) and then get the list of event lists
+        return images
+            .values
+            .sortedByDescending { it.date }
+            .groupBy { im -> dateFormatter.format(Date(im.date)) }
+            .values
+            .toList()
+    }
+
+    /**
+     * Gets a specific amount of images starting at a specified time
+     *
+     * @param timeStart - Time to start (inclusive)
+     * @param timeEnd - Time to end (exclusive)
+     * @param n - number of images to take
+     */
+    fun getImagesInRange(timeStart: Long, timeEnd: Long, latestFirst: Boolean = true, n: Int = images.size): Array<ImageData> {
+        return if (latestFirst){ images.values.sortedByDescending { it.date }.filter { if (timeStart < timeEnd) { it.date in (timeStart)..<timeEnd } else { it.date in (timeEnd)..<timeStart } }} else { images.values.sortedBy { it.date }.filter { if (timeStart < timeEnd) { it.date in (timeStart + 1)..timeEnd } else { it.date in (timeEnd + 1)..timeStart } } }.take(n).toTypedArray()
+    }
+
+    /**
+     * Gets a specific amount of images starting at a specified time
+     *
+     * @param time - Time to start (inclusive
+     * @param n - number of images to take
+     */
+    fun getImagesFromTime(time: Long, latestFirst: Boolean = true, n: Int = images.size): Array<ImageData> {
+        return if (latestFirst){ images.values.sortedByDescending {  it.date }.filter { it.date <= time }} else { images.values.sortedBy { it.date }.filter { it.date >= time } }.take(n).toTypedArray()
     }
 }
