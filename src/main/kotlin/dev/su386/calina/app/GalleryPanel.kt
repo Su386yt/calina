@@ -2,7 +2,6 @@ package dev.su386.calina.app
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -21,9 +20,12 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import dev.su386.calina.app.App.searchBarContent
 import dev.su386.calina.images.ImageData
 import dev.su386.calina.images.ImageManager.getImagesByDate
-import dev.su386.calina.images.ImageManager.getImagesInRange
+import dev.su386.calina.images.filters.*
+import dev.su386.calina.images.filters.FilterJunction.Companion.toConjunction
+import dev.su386.calina.images.filters.FilterJunction.Companion.toDisJunction
 import dev.su386.calina.utils.AutoResizeText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -33,21 +35,45 @@ import java.util.concurrent.Semaphore
 
 
 private val semaphore = Semaphore(20)
-var totalLoaded = 0
 
 @Composable
 fun GalleryPanel() {
-    GalleryWaterfall()
+    GalleryWaterfall(Modifier.fillMaxWidth())
 }
 
 @Composable
-fun GalleryWaterfall() {
+fun GalleryWaterfall(modifier: Modifier) {
     val listState = rememberLazyListState()
-    val images = getImagesByDate()
+    val searchBarContent = if (searchBarContent.text == "Search...") { "" } else { searchBarContent.text }
+    val tokens = searchBarContent.split(" ", "/", "-")
+
+    val conjunction = mutableListOf<Filter>()
+    tokens.forEach {
+        conjunction.add(
+            listOf(
+                DayOfWeekFilter(it),
+                DayOfMonthFilter(it),
+                MonthFilter(it),
+                YearFilter(it),
+                TagNameFilter(it)
+            ).toDisJunction()
+        )
+    }
+
+    val filters = mutableListOf(
+        DayOfWeekFilter(searchBarContent),
+        DayOfMonthFilter(searchBarContent),
+        MonthFilter(searchBarContent),
+        YearFilter(searchBarContent),
+        TagNameFilter(searchBarContent),
+        conjunction.toConjunction()
+    )
+
+    val images = getImagesByDate(filters)
 
     LazyColumn(
         state = listState,
-        modifier = Modifier.fillMaxWidth()
+        modifier = modifier
     ) {
         items(images, key = { it.first().dateTime }) { imageGroup ->
             Day(
@@ -73,7 +99,6 @@ private fun Day(modifier: Modifier = Modifier, date: Date, images: Array<ImageDa
         parentWidthDp,
     )
 
-
     Box(
         modifier = modifier
             .height(IntrinsicSize.Min)
@@ -95,8 +120,6 @@ private fun Day(modifier: Modifier = Modifier, date: Date, images: Array<ImageDa
                 color = MaterialTheme.colors.onBackground,
                 align = Alignment.CenterStart,
             )
-
-
 
             Column(
                 Modifier
@@ -137,7 +160,10 @@ private fun Day(modifier: Modifier = Modifier, date: Date, images: Array<ImageDa
 
 @Composable
 private fun GalleryRow(
-    images: List<ImageData>, height: Dp, modifier: Modifier = Modifier, horizontalArrangement: Arrangement.Horizontal = Arrangement.SpaceBetween
+    images: List<ImageData>,
+    height: Dp,
+    modifier: Modifier = Modifier,
+    horizontalArrangement: Arrangement.Horizontal = Arrangement.SpaceBetween
 ) {
     val padding = if (horizontalArrangement == Arrangement.Start) {
         2.dp
@@ -209,12 +235,4 @@ fun rememberAsyncImage(image: ImageData): State<Painter> {
             }
         }
     }
-}
-
-const val MILLIS_IN_DAY = 24 * 60 * 60 * 1000
-
-fun getNextImages(timeToStart: Long): List<ImageData> {
-    val allImages = mutableListOf<ImageData>()
-    allImages.addAll(getImagesInRange(timeToStart, timeToStart + MILLIS_IN_DAY))
-    return allImages
 }

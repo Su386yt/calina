@@ -5,14 +5,11 @@ import com.drew.metadata.exif.ExifIFD0Directory
 import com.drew.metadata.exif.ExifSubIFDDirectory
 import com.drew.metadata.exif.GpsDirectory
 import dev.su386.calina.Calina
-//import dev.su386.calina.app.totalLoaded
 import dev.su386.calina.data.Database
 import dev.su386.calina.utils.HashingImageInputStream
 import dev.su386.calina.utils.Location
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
-import java.awt.Graphics2D
-import java.awt.RenderingHints
 import java.awt.image.BufferedImage
 import java.io.File
 import java.io.FileInputStream
@@ -139,6 +136,7 @@ class ImageData(
     }
 
     val dateTime: Date get() = Date(date)
+    val calendar: Calendar get() = Calendar.getInstance().apply { timeInMillis = date }
 
     @Transient
     private var _tags: MutableSet<UUID>? = null

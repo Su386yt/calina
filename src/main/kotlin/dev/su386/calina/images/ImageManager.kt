@@ -3,6 +3,8 @@ package dev.su386.calina.images
 import dev.su386.calina.data.Database.readData
 import dev.su386.calina.data.Database.writeData
 import dev.su386.calina.images.ImageData.Companion.toImageData
+import dev.su386.calina.images.filters.Filter
+import dev.su386.calina.images.filters.FilterJunction.Companion.toDisJunction
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.flow.asFlow
@@ -131,7 +133,7 @@ object ImageManager {
         jobs.awaitAll()
     }
 
-    fun getImagesByDate(): List<List<ImageData>> {
+    fun getImagesByDate(filters: List<Filter> = listOf()): List<List<ImageData>> {
         val timeZone = TimeZone.getDefault()
         val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).apply {
             setTimeZone(timeZone)
@@ -141,6 +143,7 @@ object ImageManager {
         return images
             .values
             .sortedByDescending { it.date }
+            .filter { filters.toDisJunction().isValidImage(it) }
             .groupBy { im -> dateFormatter.format(Date(im.date)) }
             .values
             .toList()
@@ -153,8 +156,8 @@ object ImageManager {
      * @param timeEnd - Time to end (exclusive)
      * @param n - number of images to take
      */
-    fun getImagesInRange(timeStart: Long, timeEnd: Long, latestFirst: Boolean = true, n: Int = images.size): Array<ImageData> {
-        return if (latestFirst){ images.values.sortedByDescending { it.date }.filter { if (timeStart < timeEnd) { it.date in (timeStart)..<timeEnd } else { it.date in (timeEnd)..<timeStart } }} else { images.values.sortedBy { it.date }.filter { if (timeStart < timeEnd) { it.date in (timeStart + 1)..timeEnd } else { it.date in (timeEnd + 1)..timeStart } } }.take(n).toTypedArray()
+    fun getImagesInRange(timeStart: Long, timeEnd: Long, latestFirst: Boolean = true, n: Int = images.size, filters: List<Filter> = listOf()): Array<ImageData> {
+        return if (latestFirst){ images.values.sortedByDescending { it.date }.filter { if (timeStart < timeEnd) { it.date in (timeStart)..<timeEnd } else { it.date in (timeEnd)..<timeStart }  && filters.toDisJunction().isValidImage(it) }} else { images.values.sortedBy { it.date }.filter { if (timeStart < timeEnd) { it.date in (timeStart + 1)..timeEnd } else { it.date in (timeEnd + 1)..timeStart } && filters.toDisJunction().isValidImage(it) } }.take(n).toTypedArray()
     }
 
     /**
@@ -163,7 +166,7 @@ object ImageManager {
      * @param time - Time to start (inclusive
      * @param n - number of images to take
      */
-    fun getImagesFromTime(time: Long, latestFirst: Boolean = true, n: Int = images.size): Array<ImageData> {
-        return if (latestFirst){ images.values.sortedByDescending {  it.date }.filter { it.date <= time }} else { images.values.sortedBy { it.date }.filter { it.date >= time } }.take(n).toTypedArray()
+    fun getImagesFromTime(time: Long, latestFirst: Boolean = true, n: Int = images.size, filters: List<Filter> = listOf()): Array<ImageData> {
+        return if (latestFirst){ images.values.sortedByDescending {  it.date }.filter { it.date <= time && filters.toDisJunction().isValidImage(it) }} else { images.values.sortedBy { it.date }.filter { it.date >= time && filters.toDisJunction().isValidImage(it) } }.take(n).toTypedArray()
     }
 }
