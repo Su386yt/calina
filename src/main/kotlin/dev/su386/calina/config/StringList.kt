@@ -9,7 +9,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
@@ -37,6 +39,7 @@ class StringList(
     @Composable
     override fun getComposable() {
         val list by remember { mutableStateOf(this.value) }
+        var selection by remember { mutableStateOf(TextRange(0)) }
         var isError by remember { mutableStateOf(false) }
 
         Box(
@@ -68,11 +71,13 @@ class StringList(
                     )
                 }
                 TextField(
-                    value = text.value,
+                    value = TextFieldValue(text = text.value, selection = selection),
                     onValueChange = { it ->
-                        text.value = it
+                        val previousSize = value.size
+                        text.value = it.text
+                        selection = it.selection
                         try {
-                            val split = mutableListOf(*it.split(", ").toTypedArray())
+                            val split = mutableListOf(*it.text.split(", ").toTypedArray())
                             for (i in split.indices) {
                                 split[i] = split[i].trim().trim('"', ',')
                             }
@@ -83,6 +88,10 @@ class StringList(
                                     continue
                                 }
                                 value.add(split[i])
+                            }
+
+                            if (value.size > previousSize) {
+                                selection = TextRange(selection.start + 1)
                             }
 
                             isError = false
