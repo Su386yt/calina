@@ -5,6 +5,7 @@ import com.drew.metadata.exif.ExifIFD0Directory
 import com.drew.metadata.exif.ExifSubIFDDirectory
 import com.drew.metadata.exif.GpsDirectory
 import dev.su386.calina.Calina
+import dev.su386.calina.CalinaConfig
 import dev.su386.calina.data.Database
 import dev.su386.calina.utils.HashingImageInputStream
 import dev.su386.calina.utils.HashingInputStream
@@ -51,9 +52,7 @@ class ImageData(
         }
     }
     /**
-     * Returns the image associated with this image data.
-     *
-     * Caches the image for 30 seconds
+     * @return the BufferedImage associated with this image data.
      */
     val image: BufferedImage get() {
         try {
@@ -164,13 +163,17 @@ class ImageData(
     }
 
     /**
-     * Checks whether the file in [filePaths] exists, and removes them if they do not
+     * Checks whether the file in [filePaths] exists within the allowed paths, and removes them if they do not
      *
      * @return The number of file paths removed
      */
     fun cleanFilePaths(): Int {
         val oldLength = filePaths.size
-        this.filePaths = this.filePaths.filter { path -> File(path).exists() }.toTypedArray()
+        this.filePaths = this.filePaths.filter { path ->
+            File(path).exists() && CalinaConfig.get<List<String>>("gallery/imagePaths").any {
+                    folder ->  File(path).absolutePath.startsWith(File(folder).absolutePath)
+            }
+        }.toTypedArray()
         return oldLength - filePaths.size
     }
 
@@ -220,8 +223,7 @@ class ImageData(
 
     companion object {
         /**
-         * Returns the image data at that path.
-         * If no metadata exists in an image, it returns a metadata with default values.
+         * @return the image data at that path. If no metadata exists in an image, it returns a metadata with default values.
          *
          * Make sure to use Dispatchers.IO
          */
