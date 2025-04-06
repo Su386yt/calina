@@ -12,6 +12,9 @@ import dev.su386.calina.Calina.applicationScope
 import dev.su386.calina.Calina.exitAppSafely
 import dev.su386.calina.app.App
 import dev.su386.calina.images.ImageManager.cleanMissingImages
+import dev.su386.calina.images.ImageManager.cleanOrphanedIcons
+import dev.su386.calina.images.ImageManager.cleanSingleImages
+import dev.su386.calina.images.ImageManager.cleanWrongImages
 import dev.su386.calina.images.ImageManager.images
 import dev.su386.calina.images.ImageManager.loadImageData
 import dev.su386.calina.images.ImageManager.readImageData
@@ -20,11 +23,9 @@ import dev.su386.calina.images.Tag.Companion.saveTags
 import dev.su386.calina.tasks.OnCloseTask
 import dev.su386.calina.tasks.OnStartTask
 import dev.su386.calina.tasks.RepeatTask
-import dev.su386.calina.tasks.RepeatTask.TaskCooldown.Companion.ms
 import dev.su386.calina.tasks.TaskManager
 import dev.su386.calina.tasks.TaskManager.onStart
 import dev.su386.calina.tasks.TaskManager.register
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers.IO
 import java.util.concurrent.atomic.AtomicLong
 import javax.imageio.ImageIO
@@ -63,16 +64,16 @@ fun main() {
         println("Images loaded: ${images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
         saveImageData()
         saveTags()
+        cleanOrphanedIcons().also { println("Orphans Deleted: ${it.first}, Orphan Space Liberated: ${it.second / 1000}KB") }
+        images.values.forEach { it.cleanIconPath() }
     })
 
     register(RepeatTask(
-        taskName = "Clean image file paths", taskCooldown = CalinaConfig.get<Long>("performance/imageHashTimeout") * 60L * 1000L,
-        startImmediately = false,
-        persistentCooldown = true
+        taskName = "Clean image file paths", taskCooldown = 8 * 60L * 1000L,
+        startImmediately = true,
     ) {
-        cleanMissingImages()
-        it.duration = CalinaConfig.get<Long>("performance/imageHashTimeout") * 60L * 1000L
-        println("Cleaned nonexistent images")
+        cleanMissingImages().also { it2 -> println("Missing image data deleted: $it2") }
+        cleanSingleImages().also { it2 -> println("Single image data deleted: $it2") }
     })
     register(RepeatTask("Look for images", taskCooldown = CalinaConfig.get<Long>("performance/imageSearchTimeout") * 60L * 1000L) {
         println("Searching for images")
@@ -81,6 +82,10 @@ fun main() {
         }
         saveImageData()
         println("Images loaded: ${images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
+    })
+    register(RepeatTask("Clean Wrong Images", taskCooldown = 5 * 60L * 1000L) {
+        cleanWrongImages().also { it2 -> println("Cleaned $it2 wrong images") }
+        it.duration = CalinaConfig.get<Long>("performance/imageHashTimeout") * 60L * 1000L
     })
 
     register(OnCloseTask("Save config task", IO) { CalinaConfig.save() })

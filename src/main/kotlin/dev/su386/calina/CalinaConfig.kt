@@ -19,24 +19,17 @@ object CalinaConfig: Config("Settings", "") {
         )
         this["gallery"].name = "Gallery"
 
-        this["performance/imageHashCount"] = Integer(
-            name = "Image Hash Count",
-            description = "Paths for which to look for images",
-            1000
-        )
         this["performance/imageHashTimeout"] = Decimal(
-            name = "Image Hash Timeout (min)",
-            description = "",
-            10.0
+            name = "Image Hash Timeout (Days)",
+            description = "How often to check whether an image has a valid hash",
+            2.0
         )
         this["performance/imageSearchTimeout"] = Decimal(
             name = "Image Search Timeout (min)",
-            description = "",
+            description = "How often to search for new images",
             2.5
         )
         this["performance"].name = "Performance"
-
-
     }
 
     @Deprecated("Use load()", ReplaceWith("load()"))

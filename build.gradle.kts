@@ -26,6 +26,7 @@ dependencies {
     implementation("com.drewnoakes:metadata-extractor:2.18.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
     implementation("com.twelvemonkeys.imageio:imageio-jpeg:3.12.0")
+    implementation("org.apache.commons:commons-imaging:1.0.0-alpha5")
 }
 
 compose.desktop {

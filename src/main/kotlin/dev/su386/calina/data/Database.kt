@@ -15,7 +15,7 @@ object Database {
     /**
      * @link https://docs.oracle.com/javase/tutorial/essential/environment/sysprop.html
      */
-    val PATH = "${System.getProperty("user.home")}/calina"
+    val PATH = "${System.getProperty("user.home")}/.calina"
     val JSON = GsonBuilder()
         .setExclusionStrategies(TransientExclusionStrategy())
         .setPrettyPrinting()

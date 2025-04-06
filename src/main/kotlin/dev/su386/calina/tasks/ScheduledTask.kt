@@ -12,7 +12,6 @@ import java.util.*
  *
  * @param taskName - Name of the task
  * @param runIn - Time in ms for when to execute the task
- * @param persistentTimer - Whether the scheduled task is saved on restarts. If true, and an app is restarted, the time since last active will save
  * @param coroutineDispatcher - Dispatcher context to run the [onRun] function in
  * @param onRun - What to run when the task is called
  */

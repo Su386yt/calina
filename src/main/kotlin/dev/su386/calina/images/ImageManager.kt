@@ -1,10 +1,13 @@
 package dev.su386.calina.images
 
+import dev.su386.calina.CalinaConfig
+import dev.su386.calina.data.Database
 import dev.su386.calina.data.Database.readData
 import dev.su386.calina.data.Database.writeData
 import dev.su386.calina.images.ImageData.Companion.toImageData
 import dev.su386.calina.images.filters.Filter
 import dev.su386.calina.images.filters.FilterJunction.Companion.toDisJunction
+import dev.su386.calina.utils.FileUtils.safelyDelete
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.flow.asFlow
@@ -112,10 +115,40 @@ object ImageManager {
     /**
      * Removes all images whose paths do not exist
      */
-    fun cleanMissingImages() {
+    fun cleanMissingImages(): Int {
+        var i = 0
         images.forEach { (_, imageData) ->
-            imageData.cleanFilePaths()
+            i += imageData.cleanFilePaths()
         }
+        return i
+    }
+
+    /**
+     * Remove imagedata objects that have no file paths attached to them
+     *
+     * @return the total number of imagedata objects removed
+     */
+    fun cleanSingleImages(): Int {
+        return images.filter { (_, imageData) ->
+            imageData.filePaths.isEmpty()
+        }.onEach { (key, _) ->
+            images.remove(key)
+        }.count()
+    }
+
+    /**
+     * Cleans all icons in the icon folder that do not have an image referencing it
+     *
+     * @return the numbers of orphans deleted
+     */
+    fun cleanOrphanedIcons(): Pair<Int, Long> {
+        var orphanedIcons = 0
+        var orphanedIconSpace = 0L
+        val iconPath = File("${Database.PATH}/icons/")
+        iconPath.walk()
+            .filter { !images.containsKey(it.nameWithoutExtension) || it.length() == 0L}
+            .forEach { it.safelyDelete().also { deleted -> if (deleted) orphanedIcons++; orphanedIconSpace += it.length() } }
+        return Pair(orphanedIcons, orphanedIconSpace)
     }
 
     /**
@@ -123,14 +156,20 @@ object ImageManager {
      *
      * @param n - Takes the first [n] images
      */
-    fun cleanWrongImages(n: Int = images.size) = runBlocking(IO) {
-        val jobs = mutableListOf<Deferred<Unit>>()
+    fun cleanWrongImages(n: Int = images.size) = runBlocking (IO) {
+        val jobs = mutableListOf<Deferred<Int>>()
+        images.values
+            .filter { it.timeSinceLastHashCheck < System.currentTimeMillis() - 1000 * 60 * 60 * 24 * CalinaConfig.get<Double>("performance/imageHashTimeout") }
+            .sortedBy { it.timeSinceLastHashCheck }.take(n)
+            .forEach {
+                jobs.add(
+                    async(IO) {
+                        it.checkFileHashes()
+                    }
+                )
+            }
 
-        images.values.take(n).forEach {
-            jobs.add(async(IO) { it.cleanFilePaths(); return@async })
-        }
-
-        jobs.awaitAll()
+        jobs.awaitAll().sum()
     }
 
     fun getImagesByDate(filters: List<Filter> = listOf()): List<List<ImageData>> {
