@@ -52,9 +52,7 @@ class ImageData(
         }
     }
     /**
-     * Returns the image associated with this image data.
-     *
-     * Caches the image for 30 seconds
+     * @return the BufferedImage associated with this image data.
      */
     val image: BufferedImage get() {
         try {
@@ -225,8 +223,7 @@ class ImageData(
 
     companion object {
         /**
-         * Returns the image data at that path.
-         * If no metadata exists in an image, it returns a metadata with default values.
+         * @return the image data at that path. If no metadata exists in an image, it returns a metadata with default values.
          *
          * Make sure to use Dispatchers.IO
          */

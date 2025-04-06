@@ -124,7 +124,9 @@ object ImageManager {
     }
 
     /**
-     * Returns the total number of images removed
+     * Remove imagedata objects that have no file paths attached to them
+     *
+     * @return the total number of imagedata objects removed
      */
     fun cleanSingleImages(): Int {
         return images.filter { (_, imageData) ->
