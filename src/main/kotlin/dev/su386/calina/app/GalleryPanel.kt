@@ -37,7 +37,6 @@ import dev.su386.calina.images.filters.FilterJunction.Companion.toConjunction
 import dev.su386.calina.images.filters.FilterJunction.Companion.toDisJunction
 import dev.su386.calina.utils.AutoResizeText
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.*
