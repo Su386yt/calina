@@ -170,7 +170,7 @@ fun SearchBar(modifier: Modifier) {
                         }
                     )
                     activeIndex = 0
-                    updateImages()
+                    deselectAll()
                 },
                 maxLines = 1,
                 textStyle = TextStyle(

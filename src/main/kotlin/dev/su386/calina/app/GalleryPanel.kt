@@ -37,6 +37,7 @@ import dev.su386.calina.images.filters.FilterJunction.Companion.toConjunction
 import dev.su386.calina.images.filters.FilterJunction.Companion.toDisJunction
 import dev.su386.calina.utils.AutoResizeText
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.*
@@ -47,7 +48,7 @@ private val semaphore = Semaphore(20)
 private val selectedHashes = mutableStateListOf<String>()
 private var lastClickedImageHash by mutableStateOf("")
 private val selectedTagFilters = mutableStateListOf<UUID>()
-private var imagesDisplayed = mutableStateListOf<List<ImageData>>()
+private var imagesDisplayed by mutableStateOf(listOf<List<ImageData>>())
 private var imagesDisplayedSize by mutableStateOf(0)
 
 @Composable
@@ -81,7 +82,7 @@ fun FilterBar(modifier: Modifier) {
                 InputChip(
                     modifier = Modifier.padding(horizontal = 15.dp, vertical = 10.dp),
                     onClick = {
-                        selectedHashes.clear()
+                        deselectAll()
                     },
                     label = { Text("Selected Images: ${selectedHashes.size}") },
                     selected = true,
@@ -131,7 +132,6 @@ fun FilterBar(modifier: Modifier) {
                             } else {
                                 selectedTagFilters.add(tag.uuid)
                             }
-                            updateImages()
                         },
                         label = { Text(tag.name) },
                         colors = FilterChipDefaults.filterChipColors(labelColor = colors.onSurface)
@@ -173,6 +173,7 @@ fun FilterBar(modifier: Modifier) {
 fun GalleryWaterfall(modifier: Modifier) {
     val listState = rememberLazyListState()
 
+    updateImages()
     LazyColumn(
         state = listState,
         modifier = modifier
@@ -337,6 +338,11 @@ private fun ImageCard(
     }
 }
 
+fun deselectAll() {
+    selectedHashes.clear()
+    lastClickedImageHash = ""
+}
+
 fun updateImages() {
     val searchBarContent = if (searchBarContent.text == "Search...") { "" } else { searchBarContent.text }
     val tokens = searchBarContent.split(" ", "/", "-")
@@ -361,21 +367,17 @@ fun updateImages() {
         TagNameFilter(searchBarContent),
         conjunction.toConjunction()
     ).toDisJunction()
-
     val tagFilterConjunction = mutableListOf<TagFilter>()
-    selectedTagFilters.forEach {
-        val tag = tags[it]
-        if (tag!= null) {
-            tagFilterConjunction.add(TagFilter(tag))
+    selectedTagFilters
+        .toList()
+        .forEach { uuid ->
+            tags[uuid]?.let { tag ->
+                tagFilterConjunction.add(TagFilter(tag))
+            }
         }
-    }
-
-
-    imagesDisplayed.clear()
-    imagesDisplayedSize = 0
-    imagesDisplayed.addAll(getImagesByDate(
+    imagesDisplayed = getImagesByDate(
         FilterJunction(JunctionType.CONJUNCTION, searchFilterDisjunction, tagFilterConjunction.toConjunction())
-    ).onEach { it2 -> imagesDisplayedSize += it2.size })
+    ).also { imagesDisplayedSize = it.first }.second
 }
 
 private fun selectImage(image: ImageData) {

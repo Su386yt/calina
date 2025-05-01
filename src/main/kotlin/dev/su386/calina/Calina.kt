@@ -74,7 +74,9 @@ fun main() = runBlocking {
         saveTags()
         cleanOrphanedIcons().also { println("Orphans Deleted: ${it.first}, Orphan Space Liberated: ${it.second / 1000}KB") }
         images.values.forEach { it.cleanIconPath() }
-        updateImages()
+    })
+    register(OnStartTask("Update Images") {
+        Tag("Test tag")
     })
 
     register(RepeatTask(
