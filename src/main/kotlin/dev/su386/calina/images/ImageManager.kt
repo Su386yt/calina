@@ -172,7 +172,7 @@ object ImageManager {
         jobs.awaitAll().sum()
     }
 
-    fun getImagesByDate(filters: List<Filter> = listOf()): List<List<ImageData>> {
+    fun getImagesByDate(filter: Filter): List<List<ImageData>> {
         val timeZone = TimeZone.getDefault()
         val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).apply {
             setTimeZone(timeZone)
@@ -182,7 +182,7 @@ object ImageManager {
         return images
             .values
             .sortedByDescending { it.date }
-            .filter { filters.toDisJunction().isValidImage(it) }
+            .filter { filter.isValidImage(it) }
             .groupBy { im -> dateFormatter.format(Date(im.date)) }
             .values
             .toList()

@@ -6,16 +6,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.darkColors
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.ApplicationScope
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import dev.su386.calina.Calina.applicationScope
 import dev.su386.calina.Calina.exitAppSafely
+import dev.su386.calina.Calina.shiftPressed
 import dev.su386.calina.app.App
 import dev.su386.calina.images.ImageManager.cleanMissingImages
 import dev.su386.calina.images.ImageManager.cleanOrphanedIcons
@@ -25,6 +26,7 @@ import dev.su386.calina.images.ImageManager.images
 import dev.su386.calina.images.ImageManager.loadImageData
 import dev.su386.calina.images.ImageManager.readImageData
 import dev.su386.calina.images.ImageManager.saveImageData
+import dev.su386.calina.images.Tag
 import dev.su386.calina.images.Tag.Companion.saveTags
 import dev.su386.calina.tasks.*
 import dev.su386.calina.tasks.TaskManager.onStart
@@ -100,7 +102,20 @@ fun main() = runBlocking {
 
     application {
         applicationScope = this
-        Window(onCloseRequest = ::exitAppSafely) {
+        Window(
+            onCloseRequest = ::exitAppSafely,
+            onKeyEvent = {
+                if (it.key == Key.ShiftLeft && it.type == KeyEventType.KeyDown) {
+                    shiftPressed = true
+                    true
+                } else if (it.key == Key.ShiftLeft && it.type == KeyEventType.KeyUp) {
+                    shiftPressed = false
+                    true
+                } else {
+                    false
+                }
+            }
+        ) {
             CalinaTheme {
                 App()
             }
@@ -111,6 +126,7 @@ fun main() = runBlocking {
 object Calina {
     var bytesLoaded = AtomicLong(0)
     var applicationScope: ApplicationScope? = null
+    var shiftPressed by mutableStateOf(false)
 
     fun exitAppSafely() {
         TaskManager.onClose()
