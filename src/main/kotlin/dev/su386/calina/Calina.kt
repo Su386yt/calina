@@ -18,6 +18,7 @@ import dev.su386.calina.Calina.applicationScope
 import dev.su386.calina.Calina.exitAppSafely
 import dev.su386.calina.Calina.shiftPressed
 import dev.su386.calina.app.App
+import dev.su386.calina.app.updateImages
 import dev.su386.calina.images.ImageManager.cleanMissingImages
 import dev.su386.calina.images.ImageManager.cleanOrphanedIcons
 import dev.su386.calina.images.ImageManager.cleanSingleImages
@@ -73,6 +74,7 @@ fun main() = runBlocking {
         saveTags()
         cleanOrphanedIcons().also { println("Orphans Deleted: ${it.first}, Orphan Space Liberated: ${it.second / 1000}KB") }
         images.values.forEach { it.cleanIconPath() }
+        updateImages()
     })
 
     register(RepeatTask(

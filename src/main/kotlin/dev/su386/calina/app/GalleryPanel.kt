@@ -13,10 +13,7 @@ import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme.colors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.sharp.*
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.InputChip
-import androidx.compose.material3.InputChipDefaults
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,11 +48,10 @@ private val selectedHashes = mutableStateListOf<String>()
 private var lastClickedImageHash by mutableStateOf("")
 private val selectedTagFilters = mutableStateListOf<UUID>()
 private var imagesDisplayed = mutableStateListOf<List<ImageData>>()
+private var imagesDisplayedSize by mutableStateOf(0)
 
 @Composable
 fun GalleryPanel() {
-    updateImages()
-
     Column(Modifier.fillMaxSize()) {
         FilterBar(
             modifier = Modifier
@@ -137,7 +133,9 @@ fun FilterBar(modifier: Modifier) {
                             }
                             updateImages()
                         },
-                        label = { Text(tag.name) })
+                        label = { Text(tag.name) },
+                        colors = FilterChipDefaults.filterChipColors(labelColor = colors.onSurface)
+                    )
                 }
             }
             Row(
@@ -149,7 +147,7 @@ fun FilterBar(modifier: Modifier) {
                     onClick = {
                         updateImages()
                     },
-                    label = { Text("Total Images: ${images.size}", maxLines = 1) },
+                    label = { Text("Images: $imagesDisplayedSize", maxLines = 1) },
                     selected = true,
                     avatar = {
                         Icon(
@@ -339,7 +337,7 @@ private fun ImageCard(
     }
 }
 
-private fun updateImages() {
+fun updateImages() {
     val searchBarContent = if (searchBarContent.text == "Search...") { "" } else { searchBarContent.text }
     val tokens = searchBarContent.split(" ", "/", "-")
 
@@ -374,9 +372,10 @@ private fun updateImages() {
 
 
     imagesDisplayed.clear()
+    imagesDisplayedSize = 0
     imagesDisplayed.addAll(getImagesByDate(
         FilterJunction(JunctionType.CONJUNCTION, searchFilterDisjunction, tagFilterConjunction.toConjunction())
-    ))
+    ).onEach { it2 -> imagesDisplayedSize += it2.size })
 }
 
 private fun selectImage(image: ImageData) {
