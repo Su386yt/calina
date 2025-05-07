@@ -21,6 +21,8 @@ dependencies {
     // (in a separate module for demo project and in testMain).
     // With compose.desktop.common you will also lose @Preview functionality
     implementation(compose.desktop.currentOs)
+    implementation(compose.material3)
+    implementation(compose.materialIconsExtended)
     testImplementation(kotlin("test"))
     implementation("com.google.code.gson:gson:2.12.1")
     implementation("com.drewnoakes:metadata-extractor:2.18.0")

@@ -7,6 +7,7 @@ import com.drew.metadata.exif.GpsDirectory
 import dev.su386.calina.Calina
 import dev.su386.calina.CalinaConfig
 import dev.su386.calina.data.Database
+import dev.su386.calina.images.tags.Tag
 import dev.su386.calina.utils.HashingImageInputStream
 import dev.su386.calina.utils.HashingInputStream
 import dev.su386.calina.utils.Location
@@ -161,6 +162,17 @@ class ImageData(
         tags.add(tag.uuid)
         tag.imageHashes.add(this.hash)
     }
+
+    /**
+     * Remove a tag from this image
+     *
+     * @param tag - tag to remove
+     */
+    fun removeTag(tag: Tag) {
+        tags.remove(tag.uuid)
+        tag.imageHashes.remove(this.hash)
+    }
+
 
     /**
      * Checks whether the file in [filePaths] exists within the allowed paths, and removes them if they do not

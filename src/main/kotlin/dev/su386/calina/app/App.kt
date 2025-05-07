@@ -8,10 +8,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.onClick
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Photo
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,7 +43,7 @@ fun App() {
         Row(
             modifier = Modifier
                 .fillMaxSize(1f)
-                .background(MaterialTheme.colors.background)
+                .background(MaterialTheme.colorScheme.background)
                 .focusable(true)
                 .onClick {
                     focusManager.clearFocus()
@@ -78,14 +78,12 @@ fun App() {
                 }
             }
         }
-        println("Recomposing app")
-        println(stack.size)
+
         for (popup in stack) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                println("a")
                 popup()
             }
         }
@@ -103,8 +101,8 @@ fun NavigationWindow(modifier: Modifier = Modifier) {
                 .heightIn(max = 50.dp)
                 .padding(4.dp)
         )
-        val panels = remember { panels }
 
+        val panels = remember { panels }
         panels[activeIndex].panel()
     }
 }
@@ -120,7 +118,7 @@ fun Header(heading: String, modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxHeight()
                 .weight(.1f),
-            color = MaterialTheme.colors.onBackground,
+            color = MaterialTheme.colorScheme.onBackground,
         )
         Box(
             Modifier.weight(.2f)
@@ -152,7 +150,7 @@ fun SearchBar(modifier: Modifier) {
             modifier = Modifier
                 .fillMaxSize()
                 .clip(RoundedCornerShape(40))
-                .background(color = MaterialTheme.colors.surface)
+                .background(color = MaterialTheme.colorScheme.surface)
         ) {
             BasicTextField(
                 value = searchBarContent,
@@ -170,10 +168,11 @@ fun SearchBar(modifier: Modifier) {
                         }
                     )
                     activeIndex = 0
+                    deselectAll()
                 },
                 maxLines = 1,
                 textStyle = TextStyle(
-                    color = MaterialTheme.colors.onSurface,
+                    color = MaterialTheme.colorScheme.onSurface,
                 ),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
@@ -189,7 +188,7 @@ fun SearchBar(modifier: Modifier) {
                         )
 
                     },
-                cursorBrush = SolidColor(MaterialTheme.colors.onSurface)
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.onSurface)
             )
         }
     }
@@ -199,13 +198,13 @@ object App {
     val panels = listOf(
         NavRailIconData(
             "Gallery",
-            Icons.Default.Add,
+            Icons.Outlined.Photo,
             { GalleryPanel() },
             { println("Home button clicked") }
         ),
         NavRailIconData(
             "Settings",
-            Icons.Default.Settings,
+            Icons.Outlined.Settings,
             { ConfigPanel() },
             { println("Settings button clicked") }
         ),

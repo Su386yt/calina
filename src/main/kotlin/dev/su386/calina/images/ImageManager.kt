@@ -6,7 +6,7 @@ import dev.su386.calina.data.Database.readData
 import dev.su386.calina.data.Database.writeData
 import dev.su386.calina.images.ImageData.Companion.toImageData
 import dev.su386.calina.images.filters.Filter
-import dev.su386.calina.images.filters.FilterJunction.Companion.toDisJunction
+import dev.su386.calina.images.tags.Tag
 import dev.su386.calina.utils.FileUtils.safelyDelete
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
 import java.io.File
 import java.text.SimpleDateFormat
+import java.time.ZoneId
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
@@ -34,7 +35,7 @@ object ImageManager {
      * @param path - Start directory (note: the method loads images recursively)
      */
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun readImageData(path: String) {
+    fun searchForImages(path: String) {
         runBlocking {
             val count = AtomicInteger(0)
             val totalFiles = AtomicInteger(0)
@@ -172,40 +173,29 @@ object ImageManager {
         jobs.awaitAll().sum()
     }
 
-    fun getImagesByDate(filters: List<Filter> = listOf()): List<List<ImageData>> {
+    fun getImagesByDate(filter: Filter): Pair<Int, List<List<ImageData>>> {
         val timeZone = TimeZone.getDefault()
         val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).apply {
             setTimeZone(timeZone)
         }
 
-        // Group events by formatted date (considering timezone) and then get the list of event lists
-        return images
+        val size: Int
+        val images = images
             .values
             .sortedByDescending { it.date }
-            .filter { filters.toDisJunction().isValidImage(it) }
-            .groupBy { im -> dateFormatter.format(Date(im.date)) }
+            .filter { filter.isValidImage(it) }
+            .also { size = it.size }
+            .groupBy {
+                it.dateTime.toInstant()
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDate()
+                    .atStartOfDay(ZoneId.systemDefault())
+                    .toInstant()
+                    .toEpochMilli()
+            }
             .values
             .toList()
-    }
-
-    /**
-     * Gets a specific amount of images starting at a specified time
-     *
-     * @param timeStart - Time to start (inclusive)
-     * @param timeEnd - Time to end (exclusive)
-     * @param n - number of images to take
-     */
-    fun getImagesInRange(timeStart: Long, timeEnd: Long, latestFirst: Boolean = true, n: Int = images.size, filters: List<Filter> = listOf()): Array<ImageData> {
-        return if (latestFirst){ images.values.sortedByDescending { it.date }.filter { if (timeStart < timeEnd) { it.date in (timeStart)..<timeEnd } else { it.date in (timeEnd)..<timeStart }  && filters.toDisJunction().isValidImage(it) }} else { images.values.sortedBy { it.date }.filter { if (timeStart < timeEnd) { it.date in (timeStart + 1)..timeEnd } else { it.date in (timeEnd + 1)..timeStart } && filters.toDisJunction().isValidImage(it) } }.take(n).toTypedArray()
-    }
-
-    /**
-     * Gets a specific amount of images starting at a specified time
-     *
-     * @param time - Time to start (inclusive
-     * @param n - number of images to take
-     */
-    fun getImagesFromTime(time: Long, latestFirst: Boolean = true, n: Int = images.size, filters: List<Filter> = listOf()): Array<ImageData> {
-        return if (latestFirst){ images.values.sortedByDescending {  it.date }.filter { it.date <= time && filters.toDisJunction().isValidImage(it) }} else { images.values.sortedBy { it.date }.filter { it.date >= time && filters.toDisJunction().isValidImage(it) } }.take(n).toTypedArray()
+        // Group events by formatted date (considering timezone) and then get the list of event lists
+        return Pair(size, images)
     }
 }
