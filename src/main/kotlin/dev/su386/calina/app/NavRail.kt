@@ -5,7 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,7 +24,7 @@ fun NavRail(modifier: Modifier = Modifier, vararg iconsData: NavRailIconData) {
             .clip(RoundedCornerShape(7.dp))
             .fillMaxWidth()
             .fillMaxHeight()
-            .background(MaterialTheme.colors.surface),
+            .background(MaterialTheme.colorScheme.surface),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -35,9 +35,9 @@ fun NavRail(modifier: Modifier = Modifier, vararg iconsData: NavRailIconData) {
                 name = iconsData[i].name,
                 icon = iconsData[i].icon,
                 iconIndex = i,
-                backgroundColor = MaterialTheme.colors.surface,
-                activeColor = MaterialTheme.colors.secondary,
-                textColor = MaterialTheme.colors.onBackground,
+                backgroundColor = MaterialTheme.colorScheme.surface,
+                activeColor = MaterialTheme.colorScheme.secondary,
+                textColor = MaterialTheme.colorScheme.onBackground,
                 onClick = iconsData[i].onClick
             )
 

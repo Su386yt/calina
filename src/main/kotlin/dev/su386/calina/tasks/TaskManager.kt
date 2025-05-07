@@ -2,7 +2,7 @@ package dev.su386.calina.tasks
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.LinearProgressIndicator
-import androidx.compose.material.MaterialTheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
@@ -105,7 +105,7 @@ object TaskManager {
         navigationStack.add {
             Column(
                 Modifier.fillMaxSize()
-                    .background(MaterialTheme.colors.surface),
+                    .background(MaterialTheme.colorScheme.surface),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
@@ -113,7 +113,7 @@ object TaskManager {
                     "Loading ${tasksCompleted.get()}/$count tasks",
                     modifier = Modifier.height(50.dp)
                         .fillMaxWidth(),
-                    color = MaterialTheme.colors.onSurface,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Box(
                     modifier = Modifier.height(25.dp)
@@ -122,8 +122,8 @@ object TaskManager {
                     modifier = Modifier
                         .height(80.dp)
                         .aspectRatio(1f),
-                    color = MaterialTheme.colors.primary,
-                    backgroundColor = MaterialTheme.colors.background,
+                    color = MaterialTheme.colorScheme.primary,
+                    backgroundColor = MaterialTheme.colorScheme.background,
                 )
             }
         }

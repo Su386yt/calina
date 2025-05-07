@@ -6,6 +6,7 @@ import dev.su386.calina.data.Database.readData
 import dev.su386.calina.data.Database.writeData
 import dev.su386.calina.images.ImageData.Companion.toImageData
 import dev.su386.calina.images.filters.Filter
+import dev.su386.calina.images.tags.Tag
 import dev.su386.calina.utils.FileUtils.safelyDelete
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
@@ -34,7 +35,7 @@ object ImageManager {
      * @param path - Start directory (note: the method loads images recursively)
      */
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun readImageData(path: String) {
+    fun searchForImages(path: String) {
         runBlocking {
             val count = AtomicInteger(0)
             val totalFiles = AtomicInteger(0)
