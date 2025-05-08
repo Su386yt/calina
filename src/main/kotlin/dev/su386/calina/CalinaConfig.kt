@@ -19,6 +19,12 @@ object CalinaConfig: Config("Settings", "") {
         )
         this["gallery"].name = "Gallery"
 
+        this["newGallery/imagePaths"] = DirectoryList(
+            name = "Image Paths",
+            description = "Paths from which to look for images",
+        )
+        this["newGallery"].name = "New Gallery"
+
         this["performance/imageHashTimeout"] = Decimal(
             name = "Image Hash Timeout (Days)",
             description = "How often to check whether an image has a valid hash",
