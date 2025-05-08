@@ -69,11 +69,10 @@ class ImageData(
                 inputStream.close()
                 val calcedHash = digest.digest().joinToString("") { "%02x".format(it) }
                 if (calcedHash != hash) {
-                    println("$calcedHash != $hash")
                     continue
                 }
 
-                return ImageIO.read(image.inputStream()).also { println("Image found") }
+                return ImageIO.read(image.inputStream())
             }
         } catch (e: Exception) {
             println("Error loading image for ${this.filePaths.firstOrNull()}: ${e.message}")

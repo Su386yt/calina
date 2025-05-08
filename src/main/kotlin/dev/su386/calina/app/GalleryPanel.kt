@@ -25,11 +25,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.toPainter
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.su386.calina.Calina.shiftPressed
+import dev.su386.calina.app.App.closeAllPopups
 import dev.su386.calina.app.App.closePopup
 import dev.su386.calina.app.App.openPopup
 import dev.su386.calina.app.App.searchBarContent
@@ -473,8 +475,7 @@ private fun ImageCard(
                     selectImage(image)
                 } else {
                     openPopup { ImageDisplay(
-                        Modifier.fillMaxSize()
-                            .background(Color.Black),
+                        Modifier.fillMaxSize(),
                         image,
                         painter
                     ) }
@@ -519,6 +520,7 @@ private fun ImageDisplay(
     val painter by rememberAsyncImage(imageData, false, iconPainter)
     Column(
         modifier
+            .background(Color.Black)
             .onClick {},
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -647,12 +649,20 @@ private fun ImageCarousel(
                         .clip(RoundedCornerShape(10))
                         .wrapContentWidth(Alignment.End, unbounded = true)
                         .background(color = colorScheme.onBackground)
+                        .clickable {
+                            closeAllPopups()
+                            openPopup { ImageDisplay(
+                                Modifier.fillMaxSize(),
+                                image,
+                                painter
+                            ) }
+                        }
                 )
             }
         }
 
         Image(
-            painter =  rememberAsyncImage(imagesDisplayedList[selectedImageIndex]).value,
+            painter = rememberAsyncImage(imagesDisplayedList[selectedImageIndex]).value,
             contentDescription = "",
             modifier = Modifier
                 .padding(horizontal = 2.5.dp)
@@ -681,6 +691,14 @@ private fun ImageCarousel(
                         .clip(RoundedCornerShape(10))
                         .wrapContentWidth(Alignment.Start, unbounded = true)
                         .background(color = colorScheme.onBackground)
+                        .clickable {
+                            closeAllPopups()
+                            openPopup { ImageDisplay(
+                                Modifier.fillMaxSize(),
+                                image,
+                                painter
+                            ) }
+                        }
                 )
             }
         }
