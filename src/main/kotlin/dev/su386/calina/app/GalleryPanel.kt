@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Checkbox
 import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme.colors
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
@@ -19,6 +20,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.graphics.painter.Painter
@@ -43,6 +45,9 @@ import dev.su386.calina.utils.AutoResizeText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.concurrent.Semaphore
 
@@ -52,7 +57,7 @@ private val selectedHashes = mutableStateListOf<String>()
 private var lastClickedImageHash by mutableStateOf("")
 private val selectedTagFilters = mutableStateListOf<UUID>()
 private var imagesDisplayed by mutableStateOf(listOf<List<ImageData>>())
-private var imagesDisplayedSize by mutableStateOf(0)
+private var imagesDisplayedList by mutableStateOf(listOf<ImageData>())
 
 @Composable
 fun GalleryPanel() {
@@ -306,7 +311,7 @@ fun FilterBar(modifier: Modifier) {
                     onClick = {
                         updateImages()
                     },
-                    label = { Text("Images: $imagesDisplayedSize", maxLines = 1) },
+                    label = { Text("Images: ${imagesDisplayedList.size}", maxLines = 1) },
                     selected = true,
                     avatar = {
                         Icon(
@@ -466,6 +471,13 @@ private fun ImageCard(
             .onClick(interactionSource = interactionSource) {
                 if (selectedHashes.isNotEmpty()) {
                     selectImage(image)
+                } else {
+                    openPopup { ImageDisplay(
+                        Modifier.fillMaxSize()
+                            .background(Color.Black),
+                        image,
+                        painter
+                    ) }
                 }
             },
 
@@ -495,6 +507,220 @@ private fun ImageCard(
             }
         }
     }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun ImageDisplay(
+    modifier: Modifier = Modifier,
+    imageData: ImageData,
+    iconPainter: Painter = ColorPainter(Color.Black),
+) {
+    val painter by rememberAsyncImage(imageData, false, iconPainter)
+    Column(
+        modifier
+            .onClick {},
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Row(
+            Modifier.fillMaxWidth()
+                .height(35.dp),
+
+        ) {
+            Row(
+                Modifier.fillMaxHeight()
+                    .weight(1f),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+            }
+
+            Row(
+                Modifier.fillMaxHeight()
+                    .weight(1f),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val date = imageData
+                    .dateTime
+                    .toInstant()
+                    .atOffset(
+                        ZoneOffset.ofTotalSeconds(TimeZone.getDefault().rawOffset / 1000)
+                    )
+                    .toLocalDateTime()
+                    .format(DateTimeFormatter.ofPattern("HH:mm dd MMMM yyyy"))
+                AutoResizeText(
+                    date,
+                    modifier = Modifier
+                        .padding(5.dp)
+                        .fillMaxHeight()
+                        .weight(1f),
+                    color = Color.White
+                )
+            }
+            Row(
+                Modifier.fillMaxHeight()
+                    .weight(1f),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Outlined.Close,
+                    contentDescription = "Clear",
+                    Modifier
+                        .padding(5.dp)
+                        .fillMaxHeight()
+                        .aspectRatio(1f)
+                        .clickable {
+                            closePopup()
+                        },
+                    tint = Color.White
+                )
+            }
+        }
+        Box(
+            Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painter,
+                contentDescription = "",
+                modifier = Modifier
+                    .aspectRatio(imageData.imageSize.ratio)
+                    .fillMaxSize()
+                    .background(color = colorScheme.onBackground)
+            )
+        }
+        ImageCarousel(
+            Modifier.height(40.dp)
+                .fillMaxWidth(),
+            imageData.hash
+        )
+    }
+}
+
+@Composable
+private fun ImageCarousel(
+    modifier: Modifier = Modifier,
+    selectedImageHash: String,
+) {
+    var parentWidth by remember { mutableStateOf(0) }
+    var parentHeight by remember { mutableStateOf(0) }
+    val selectedImageIndex = imagesDisplayedList.indexOfFirst { it.hash == selectedImageHash }
+    Row(
+        modifier
+            .onGloballyPositioned { layoutResult ->
+                parentWidth = layoutResult.size.width
+            },
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.Bottom
+    ) {
+        val imagesInCarousel = getImagesForCarousel(
+            height = parentHeight,
+            parentWidth = parentWidth,
+            padding = 2.dp,
+            startIndex = selectedImageIndex
+        )
+        val ratio = imagesDisplayedList[selectedImageIndex].imageSize.ratio
+
+        Row (
+            Modifier.weight(1f)
+                .fillMaxHeight(0.9f)
+                .wrapContentWidth(Alignment.End, unbounded = true)
+                .onGloballyPositioned { layoutResult ->
+                    parentHeight = layoutResult.size.height
+                },
+            horizontalArrangement = Arrangement.End
+        ) {
+            for (image in imagesInCarousel.first) {
+                val painter by rememberAsyncImage(image)
+                Image(
+                    painter = painter,
+                    contentDescription = "",
+                    modifier = Modifier
+                        .padding(horizontal = 2.dp)
+                        .aspectRatio(ratio)
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(10))
+                        .wrapContentWidth(Alignment.End, unbounded = true)
+                        .background(color = colorScheme.onBackground)
+                )
+            }
+        }
+
+        Image(
+            painter =  rememberAsyncImage(imagesDisplayedList[selectedImageIndex]).value,
+            contentDescription = "",
+            modifier = Modifier
+                .padding(horizontal = 2.5.dp)
+                .aspectRatio(ratio)
+                .fillMaxHeight()
+                .clip(RoundedCornerShape(15))
+                .border(1.dp, colors.primary, RoundedCornerShape(15))
+                .background(color = colorScheme.onBackground)
+        )
+
+        Row (
+            Modifier.weight(1f)
+                .fillMaxHeight(0.9f)
+                .wrapContentWidth(Alignment.Start, unbounded = true),
+            horizontalArrangement = Arrangement.Start,
+        ) {
+            for (image in imagesInCarousel.second) {
+                val painter by rememberAsyncImage(image)
+                Image(
+                    painter = painter,
+                    contentDescription = "",
+                    modifier = Modifier
+                        .padding(horizontal = 2.dp)
+                        .aspectRatio(ratio)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(10))
+                        .wrapContentWidth(Alignment.Start, unbounded = true)
+                        .background(color = colorScheme.onBackground)
+                )
+            }
+        }
+    }
+}
+
+private fun getImagesForCarousel(
+    height: Int,
+    parentWidth: Int,
+    padding: Dp,
+    startIndex: Int
+): Pair<List<ImageData>, List<ImageData>> {
+    val left = mutableListOf<ImageData>()
+    val right = mutableListOf<ImageData>()
+    var leftWidth = 0f
+    var rightWidth = 0f
+    var leftIndex = startIndex - 1
+    var rightIndex = startIndex + 1
+    val ratio = imagesDisplayedList[startIndex].imageSize.ratio
+    val imageWidth =  height * ratio
+
+    while (
+        parentWidth > 0 && height > 0 &&
+        leftWidth < parentWidth/2 &&
+        rightWidth < parentWidth/2 &&
+        (leftIndex >= 0 || rightIndex <= imagesDisplayedList.size)
+    ) {
+        if (rightIndex < imagesDisplayedList.size) {
+            right.add(imagesDisplayedList[rightIndex])
+            rightWidth += imageWidth + padding.value
+            rightIndex++
+        }
+        if (leftIndex >= 0) {
+            left.add(imagesDisplayedList[leftIndex])
+            leftWidth += imageWidth + padding.value
+            leftIndex--
+        }
+    }
+
+    return Pair(left, right)
 }
 
 fun deselectAll() {
@@ -543,19 +769,18 @@ fun updateImages() {
 
     imagesDisplayed = getImagesByDate(
         FilterJunction(JunctionType.CONJUNCTION, searchFilterDisjunction, tagFilterConjunction.toConjunction())
-    ).also { imagesDisplayedSize = it.first }.second
+    )
+    imagesDisplayedList = mutableListOf<ImageData>().apply {
+        imagesDisplayed.forEach {
+            addAll(it)
+        }
+    }.toList()
 }
 
 private fun selectImage(image: ImageData) {
     val selected = selectedHashes.contains(image.hash)
     val lastImageData = images[lastClickedImageHash]
     if (shiftPressed && lastImageData != null) {
-        val imagesDisplayedList = mutableListOf<ImageData>().apply {
-            imagesDisplayed.forEach {
-                addAll(it)
-            }
-        }
-
         imagesDisplayedList
             .subList(imagesDisplayedList.indexOf(lastImageData), imagesDisplayedList.indexOf(image) + 1)
             .forEach {
@@ -610,14 +835,23 @@ private fun groupImagesIntoRows(
 }
 
 @Composable
-fun rememberAsyncImage(image: ImageData): State<Painter> {
-    val placeholder: Painter = ColorPainter(Color.Gray) // Placeholder while loading
+fun rememberAsyncImage(
+    image: ImageData,
+    icon: Boolean = true,
+    placeholder: Painter = ColorPainter(Color.Gray)
+): State<Painter> {
     return produceState(placeholder, image) {
         value = withContext(Dispatchers.IO) {
             semaphore.acquire()
             try {
-                val icon = image.icon
-                icon.toPainter().also { icon.flush() }
+                val im = if (icon) {
+                    image.icon
+                } else {
+                    image.image
+                }
+                im.toPainter().also {
+                    im.flush()
+                }
             } finally {
                 semaphore.release()
             }

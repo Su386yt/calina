@@ -1,11 +1,15 @@
 package dev.su386.calina.images
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.ui.graphics.painter.Painter
 import com.drew.imaging.ImageMetadataReader
 import com.drew.metadata.exif.ExifIFD0Directory
 import com.drew.metadata.exif.ExifSubIFDDirectory
 import com.drew.metadata.exif.GpsDirectory
 import dev.su386.calina.Calina
 import dev.su386.calina.CalinaConfig
+import dev.su386.calina.app.rememberAsyncImage
 import dev.su386.calina.data.Database
 import dev.su386.calina.images.tags.Tag
 import dev.su386.calina.utils.HashingImageInputStream
@@ -57,34 +61,25 @@ class ImageData(
      */
     val image: BufferedImage get() {
         try {
-            for (file in filePaths) {
-                val messageDigest = MessageDigest.getInstance("SHA-256")
-
-                val imageInputStream = ImageIO.createImageInputStream(File(file))
-                val hashingInputStream = HashingImageInputStream(imageInputStream, messageDigest)
-                var image: BufferedImage? = null
-
-                try {
-                    image = ImageIO.read(hashingInputStream)
-                } catch (e: Exception) {
-                    e.printStackTrace()
+            for (filePath in filePaths) {
+                val file = File(filePath)
+                val digest = MessageDigest.getInstance("SHA-256")
+                val inputStream = HashingInputStream(FileInputStream(file), digest)
+                val image = inputStream.readAllBytes()
+                inputStream.close()
+                val calcedHash = digest.digest().joinToString("") { "%02x".format(it) }
+                if (calcedHash != hash) {
+                    println("$calcedHash != $hash")
+                    continue
                 }
 
-                // Ensure the entire stream is read
-                hashingInputStream.readTillEnd()
-                val hash = messageDigest.digest().joinToString("") { "%02x".format(it) }
-                // Compute the hash now that we've read all bytes
-                hashingInputStream.close()
-
-                if (this.hash == hash && image != null){
-                    return image.also { imageInputStream.close() }
-                }
+                return ImageIO.read(image.inputStream()).also { println("Image found") }
             }
         } catch (e: Exception) {
             println("Error loading image for ${this.filePaths.firstOrNull()}: ${e.message}")
         }
 
-        return BufferedImage(32, 32, BufferedImage.TYPE_INT_RGB)
+        return BufferedImage(32, 32, BufferedImage.TYPE_INT_RGB).also { println("No image found") }
     }
 
     val icon: BufferedImage get() {
