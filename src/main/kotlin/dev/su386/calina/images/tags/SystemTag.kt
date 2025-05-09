@@ -6,6 +6,7 @@ import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
+import dev.su386.calina.app.updateImages
 import dev.su386.calina.data.Database
 import dev.su386.calina.images.tags.SystemTag.SystemTagManager.systemTags
 import java.util.*

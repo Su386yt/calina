@@ -156,10 +156,8 @@ class ImageData(
     val dateTime: Date get() = Date(date)
     val calendar: Calendar get() = Calendar.getInstance().apply { timeInMillis = date }
 
-    @Transient
-    private var _tags: MutableSet<UUID>? = null
 
-    val tags: MutableSet<UUID> get() = _tags ?: mutableSetOf<UUID>().also{ this._tags = it }
+    val tags: Set<UUID> get() = Tag.tags.filter { it.value.imageHashes.contains(hash) }.keys.toSet()
 
     /**
      * Adds a new tag to this image
@@ -167,7 +165,6 @@ class ImageData(
      * @param tag - tag to add
      */
     fun addTag(tag: Tag) {
-        tags.add(tag.uuid)
         tag.imageHashes.add(this.hash)
     }
 
@@ -177,7 +174,6 @@ class ImageData(
      * @param tag - tag to remove
      */
     fun removeTag(tag: Tag) {
-        tags.remove(tag.uuid)
         tag.imageHashes.remove(this.hash)
     }
 

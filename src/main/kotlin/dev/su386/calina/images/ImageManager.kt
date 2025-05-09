@@ -83,11 +83,6 @@ object ImageManager {
         }
 
         images[imageData.hash] = imageData
-        imageData.tags.addAll(
-            Tag.tags.values
-                .filter { it.imageHashes.contains(imageData.hash) }
-                .mapNotNull {  it.uuid }
-        )
 
         loadedPaths.addAll(imageData.filePaths)
     }

@@ -1126,6 +1126,7 @@ fun updateImages() {
         tagFilterConjunction.add(HiddenItemsFilter())
     }
 
+    imagesDisplayed = mutableListOf()
     imagesDisplayed = getImagesByDate(
         FilterJunction(JunctionType.CONJUNCTION, searchFilterDisjunction, tagFilterConjunction.toConjunction())
     ).also {
@@ -1194,30 +1195,6 @@ private fun groupImagesIntoRows(
     return rows
 }
 
-//@Composable
-//fun rememberAsyncImage(
-//    image: ImageData,
-//    icon: Boolean = true,
-//    placeholder: Painter = ColorPainter(Color.Gray)
-//): State<Painter> {
-//    return produceState(placeholder, image) {
-//        value = withContext(Dispatchers.IO) {
-//            semaphore.acquire()
-//            try {
-//                val im = if (icon) {
-//                    image.icon
-//                } else {
-//                    image.image
-//                }
-//                im.toPainter().also {
-//                    im.flush()
-//                }
-//            } finally {
-//                semaphore.release()
-//            }
-//        }
-//    }
-//}
 
 @Composable
 fun rememberAsyncImage(
@@ -1226,14 +1203,13 @@ fun rememberAsyncImage(
     placeholder: Painter = ColorPainter(Color.Gray)
 ): State<Painter> {
     val scope = rememberCoroutineScope()
-    // Use a key that combines image.hash and icon to differentiate between icon and full image loads
     val key = remember(image.hash, icon) { "${image.hash}-${if (icon) "icon" else "full"}" }
 
     return rememberSaveable(key) {
         mutableStateOf(placeholder)
     }.apply {
         if (value == placeholder) {
-            LaunchedEffect(image, icon) { // Use image and icon in LaunchedEffect
+            LaunchedEffect(image, icon) {
                 scope.launch(Dispatchers.IO) {
                     semaphore.acquire()
                     try {
