@@ -1,5 +1,6 @@
 package dev.su386.calina.images
 
+import androidx.compose.runtime.mutableIntStateOf
 import com.drew.imaging.ImageMetadataReader
 import com.drew.metadata.exif.ExifIFD0Directory
 import com.drew.metadata.exif.ExifSubIFDDirectory
@@ -158,6 +159,8 @@ class ImageData(
 
 
     val tags: Set<UUID> get() = Tag.tags.filter { it.value.imageHashes.contains(hash) }.keys.toSet()
+    @Transient
+    var updateCard = mutableIntStateOf(0)
 
     /**
      * Adds a new tag to this image

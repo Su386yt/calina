@@ -238,23 +238,7 @@ fun FilterBar(modifier: Modifier) {
                         tint = colorScheme.onBackground,
                     )
                 }
-                if (!selectedHashes.any { LikedTag.imageHashes.contains(it) }) {
-                    Icon(
-                        Icons.Outlined.FavoriteBorder,
-                        contentDescription = "Like ${selectedHashes.size} images",
-                        modifier = Modifier
-                            .padding(10.dp)
-                            .fillMaxHeight()
-                            .aspectRatio(1f)
-                            .clickable {
-                                selectedHashes.forEach {
-                                    images[it]?.addTag(LikedTag)
-                                }
-                                updateImages()
-                            },
-                        tint = colorScheme.onBackground,
-                    )
-                } else {
+                if (selectedHashes.any { LikedTag.imageHashes.contains(it) }) {
                     Icon(
                         Icons.Outlined.Favorite,
                         contentDescription = "Unlike ${selectedHashes.size} images",
@@ -266,6 +250,24 @@ fun FilterBar(modifier: Modifier) {
                                 selectedHashes.forEach {
                                     images[it]?.removeTag(LikedTag)
                                 }
+                                deselectAll()
+                                updateImages()
+                            },
+                        tint = colorScheme.onBackground,
+                    )
+                } else {
+                    Icon(
+                        Icons.Outlined.FavoriteBorder,
+                        contentDescription = "Like ${selectedHashes.size} images",
+                        modifier = Modifier
+                            .padding(10.dp)
+                            .fillMaxHeight()
+                            .aspectRatio(1f)
+                            .clickable {
+                                selectedHashes.forEach {
+                                    images[it]?.addTag(LikedTag)
+                                }
+                                deselectAll()
                                 updateImages()
                             },
                         tint = colorScheme.onBackground,
