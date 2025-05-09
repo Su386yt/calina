@@ -1,5 +1,8 @@
 package dev.su386.calina.images.tags
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.DisabledVisible
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
@@ -16,7 +19,7 @@ import java.util.*
  * @param icon - the icon to be displayed
  * @param tagPriority - Tag priority in filter list.
  */
-open class SystemTag(
+class SystemTag(
     override val name: String,
     uuid: UUID,
     override val icon: ImageVector,
@@ -60,5 +63,23 @@ open class SystemTag(
         override fun loadTags() {
             throw NotImplementedError("System tags cannot be loaded")
         }
+    }
+
+    companion object {
+        private val hiddenTagUuid = UUID.fromString("f1a6baf8-48ed-4345-9f07-00c0ad432325")
+        val HiddenTag = SystemTag(
+            name = "Hidden",
+            uuid = hiddenTagUuid,
+            icon = Icons.Outlined.DisabledVisible,
+            tagPriority = UByte.MAX_VALUE,
+        )
+
+        private val likedTagUuid = UUID.fromString("f453ee85-b0c0-44ed-a04b-ea0a2a09c7ca")
+        val LikedTag = SystemTag(
+            name = "Liked",
+            uuid = likedTagUuid,
+            icon = Icons.Outlined.FavoriteBorder,
+            tagPriority = UByte.MAX_VALUE,
+        )
     }
 }

@@ -12,11 +12,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Checkbox
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme.colors
-import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,10 +25,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.toPainter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,13 +40,17 @@ import dev.su386.calina.app.App.searchBarContent
 import dev.su386.calina.images.ImageData
 import dev.su386.calina.images.ImageManager.getImagesByDate
 import dev.su386.calina.images.ImageManager.images
-import dev.su386.calina.images.tags.Tag.Companion.tags
 import dev.su386.calina.images.filters.*
 import dev.su386.calina.images.filters.FilterJunction.Companion.toConjunction
 import dev.su386.calina.images.filters.FilterJunction.Companion.toDisJunction
-import dev.su386.calina.images.tags.HiddenTag
+import dev.su386.calina.images.tags.SystemTag.Companion.HiddenTag
+import dev.su386.calina.images.tags.SystemTag.Companion.LikedTag
+import dev.su386.calina.images.tags.Tag.Companion.tags
 import dev.su386.calina.utils.AutoResizeText
+import dev.su386.calina.utils.fillMaxHeightToMax
+import dev.su386.calina.utils.fillMaxWidthToMax
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.time.ZoneOffset
@@ -233,6 +238,40 @@ fun FilterBar(modifier: Modifier) {
                         tint = colorScheme.onBackground,
                     )
                 }
+                if (!selectedHashes.any { LikedTag.imageHashes.contains(it) }) {
+                    Icon(
+                        Icons.Outlined.FavoriteBorder,
+                        contentDescription = "Like ${selectedHashes.size} images",
+                        modifier = Modifier
+                            .padding(10.dp)
+                            .fillMaxHeight()
+                            .aspectRatio(1f)
+                            .clickable {
+                                selectedHashes.forEach {
+                                    images[it]?.addTag(LikedTag)
+                                }
+                                updateImages()
+                            },
+                        tint = colorScheme.onBackground,
+                    )
+                } else {
+                    Icon(
+                        Icons.Outlined.Favorite,
+                        contentDescription = "Unlike ${selectedHashes.size} images",
+                        modifier = Modifier
+                            .padding(10.dp)
+                            .fillMaxHeight()
+                            .aspectRatio(1f)
+                            .clickable {
+                                selectedHashes.forEach {
+                                    images[it]?.removeTag(LikedTag)
+                                }
+                                updateImages()
+                            },
+                        tint = colorScheme.onBackground,
+                    )
+                }
+
                 InputChip(
                     modifier = Modifier.padding(horizontal = 15.dp, vertical = 10.dp),
                     onClick = {
@@ -499,19 +538,49 @@ private fun ImageCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(25.dp),
-            horizontalArrangement = Arrangement.End
+                .fillMaxHeightToMax(.25f, 25.dp)
         ) {
-            if (isHovered || selectedHashes.contains(image.hash)) {
-                Checkbox(
-                    selectedHashes.contains(image.hash),
-                    modifier = Modifier,
-                    onCheckedChange = {
-                        selectImage(image)
-                    }
-                )
+            Row(
+                Modifier.weight(1f),
+                horizontalArrangement = Arrangement.Start
+            ) {
+                if (LikedTag.imageHashes.contains(image.hash)) {
+                    Icon(
+                        Icons.Outlined.Favorite,
+                        "Liked",
+                        Modifier
+                            .padding(horizontal = 7.dp)
+                            .aspectRatio(1f),
+                        tint = colors.primary
+                    )
+                }
+                if (HiddenTag.imageHashes.contains(image.hash)) {
+                    Icon(
+                        Icons.Outlined.VisibilityOff,
+                        "Hidden",
+                        Modifier
+                            .padding(horizontal = 7.dp)
+                            .aspectRatio(1f),
+                        tint = Color.White
+                    )
+                }
+            }
+            Row(
+                Modifier.weight(1f),
+                horizontalArrangement = Arrangement.End
+            ) {
+                if (isHovered || selectedHashes.contains(image.hash)) {
+                    Checkbox(
+                        selectedHashes.contains(image.hash),
+                        modifier = Modifier,
+                        onCheckedChange = {
+                            selectImage(image)
+                        }
+                    )
+                }
             }
         }
+        
     }
 }
 
@@ -628,8 +697,7 @@ private fun ImageDisplay(
             if (info) {
                 Column(
                     Modifier
-                        .fillMaxWidth(.33f)
-                        .widthIn(max = 300.dp)
+                        .fillMaxWidthToMax(.33f, 350.dp)
                         .fillMaxHeight()
                 ) {
                     AutoResizeText(
@@ -883,7 +951,7 @@ private fun ImageCarousel(
             padding = 2.dp,
             startIndex = selectedImageIndex
         )
-        val ratio = imagesDisplayedList[selectedImageIndex].imageSize.ratio
+        val ratio = 4f / 3f
 
         Row (
             Modifier.weight(1f)
@@ -896,25 +964,34 @@ private fun ImageCarousel(
         ) {
             for (image in imagesInCarousel.first) {
                 val painter by rememberAsyncImage(image)
-                Image(
-                    painter = painter,
-                    contentDescription = "",
-                    modifier = Modifier
+
+                Box(
+                    Modifier
                         .padding(horizontal = 2.dp)
                         .aspectRatio(ratio)
                         .fillMaxSize()
                         .clip(RoundedCornerShape(10))
-                        .wrapContentWidth(Alignment.End, unbounded = true)
                         .background(color = colorScheme.onBackground)
                         .clickable {
-                            closeAllPopups()
-                            openPopup { ImageDisplay(
-                                Modifier.fillMaxSize(),
-                                image,
-                                painter
-                            ) }
+                            closePopup()
+                            openPopup {
+                                ImageDisplay(
+                                    Modifier.fillMaxSize(),
+                                    image,
+                                    painter
+                                )
+                            }
                         }
-                )
+                ) {
+                    Image(
+                        painter = painter,
+                        contentDescription = "",
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
             }
         }
 
@@ -924,10 +1001,10 @@ private fun ImageCarousel(
             modifier = Modifier
                 .padding(horizontal = 2.5.dp)
                 .aspectRatio(ratio)
-                .fillMaxHeight()
+                .fillMaxWidth()
                 .clip(RoundedCornerShape(15))
                 .border(1.dp, colors.primary, RoundedCornerShape(15))
-                .background(color = colorScheme.onBackground)
+                .background(color = Color.Black)
         )
 
         Row (
@@ -938,25 +1015,32 @@ private fun ImageCarousel(
         ) {
             for (image in imagesInCarousel.second) {
                 val painter by rememberAsyncImage(image)
-                Image(
-                    painter = painter,
-                    contentDescription = "",
-                    modifier = Modifier
+                Box(
+                    Modifier
                         .padding(horizontal = 2.dp)
                         .aspectRatio(ratio)
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(10))
-                        .wrapContentWidth(Alignment.Start, unbounded = true)
-                        .background(color = colorScheme.onBackground)
+                        .background(color = Color.Black)
                         .clickable {
-                            closeAllPopups()
-                            openPopup { ImageDisplay(
-                                Modifier.fillMaxSize(),
-                                image,
-                                painter
-                            ) }
+                            closePopup()
+                            openPopup {
+                                ImageDisplay(
+                                    Modifier.fillMaxSize(),
+                                    image,
+                                    painter
+                                )
+                            }
                         }
-                )
+                ) {
+                    Image(
+                        painter = painter,
+                        contentDescription = "",
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
             }
         }
     }
@@ -995,7 +1079,7 @@ private fun getImagesForCarousel(
         }
     }
 
-    return Pair(left, right)
+    return Pair(left.reversed(), right)
 }
 
 fun deselectAll() {
@@ -1110,26 +1194,63 @@ private fun groupImagesIntoRows(
     return rows
 }
 
+//@Composable
+//fun rememberAsyncImage(
+//    image: ImageData,
+//    icon: Boolean = true,
+//    placeholder: Painter = ColorPainter(Color.Gray)
+//): State<Painter> {
+//    return produceState(placeholder, image) {
+//        value = withContext(Dispatchers.IO) {
+//            semaphore.acquire()
+//            try {
+//                val im = if (icon) {
+//                    image.icon
+//                } else {
+//                    image.image
+//                }
+//                im.toPainter().also {
+//                    im.flush()
+//                }
+//            } finally {
+//                semaphore.release()
+//            }
+//        }
+//    }
+//}
+
 @Composable
 fun rememberAsyncImage(
     image: ImageData,
     icon: Boolean = true,
     placeholder: Painter = ColorPainter(Color.Gray)
 ): State<Painter> {
-    return produceState(placeholder, image) {
-        value = withContext(Dispatchers.IO) {
-            semaphore.acquire()
-            try {
-                val im = if (icon) {
-                    image.icon
-                } else {
-                    image.image
+    val scope = rememberCoroutineScope()
+    // Use a key that combines image.hash and icon to differentiate between icon and full image loads
+    val key = remember(image.hash, icon) { "${image.hash}-${if (icon) "icon" else "full"}" }
+
+    return rememberSaveable(key) {
+        mutableStateOf(placeholder)
+    }.apply {
+        if (value == placeholder) {
+            LaunchedEffect(image, icon) { // Use image and icon in LaunchedEffect
+                scope.launch(Dispatchers.IO) {
+                    semaphore.acquire()
+                    try {
+                        val im = if (icon) {
+                            image.icon
+                        } else {
+                            image.image
+                        }
+                        val loadedPainter = im.toPainter()
+                        withContext(Dispatchers.Unconfined) {
+                            value = loadedPainter
+                        }
+                        im.flush()
+                    } finally {
+                        semaphore.release()
+                    }
                 }
-                im.toPainter().also {
-                    im.flush()
-                }
-            } finally {
-                semaphore.release()
             }
         }
     }
