@@ -1111,14 +1111,17 @@ fun updateImages() {
         TagNameFilter(searchBarContent),
         conjunction.toConjunction()
     ).toDisJunction()
+
     val tagFilterConjunction = mutableListOf<TagFilter>()
     selectedTagFilters
         .toList()
         .forEach { uuid ->
+            if (uuid == HiddenTag.uuid) {
+                return@forEach
+            }
+
             tags[uuid]?.let { tag ->
-                if (tag.calculatedTagPriority == 0u) {
-                    tagFilterConjunction.add(TagFilter(tag))
-                }
+                tagFilterConjunction.add(TagFilter(tag))
             }
         }
 
