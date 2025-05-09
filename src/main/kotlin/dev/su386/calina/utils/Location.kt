@@ -1,9 +1,9 @@
 package dev.su386.calina.utils
 
 
-data class Location constructor(
+data class Location(
     val latitude: Double,
-    val longitude: Double
+    val longitude: Double,
 ) {
     private var emptyLocation = false
 

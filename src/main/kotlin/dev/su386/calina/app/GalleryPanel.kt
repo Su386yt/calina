@@ -20,16 +20,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.toPainter
-import androidx.compose.ui.input.key.*
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import dev.su386.calina.Calina.shiftPressed
 import dev.su386.calina.app.App.closeAllPopups
 import dev.su386.calina.app.App.closePopup
@@ -47,11 +48,12 @@ import dev.su386.calina.utils.AutoResizeText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
-import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.concurrent.Semaphore
+import kotlin.io.path.Path
+import kotlin.io.path.name
 
 
 private val semaphore = Semaphore(20)
@@ -60,6 +62,7 @@ private var lastClickedImageHash by mutableStateOf("")
 private val selectedTagFilters = mutableStateListOf<UUID>()
 private var imagesDisplayed by mutableStateOf(listOf<List<ImageData>>())
 private var imagesDisplayedList by mutableStateOf(listOf<ImageData>())
+private var imagesDisplayedCount by mutableIntStateOf(0)
 
 @Composable
 fun GalleryPanel() {
@@ -308,12 +311,14 @@ fun FilterBar(modifier: Modifier) {
                 modifier = Modifier.fillMaxHeight(),
                 horizontalArrangement = Arrangement.End
             ) {
+
+
                 InputChip(
                     modifier = Modifier.padding(horizontal = 15.dp, vertical = 10.dp),
                     onClick = {
                         updateImages()
                     },
-                    label = { Text("Images: ${imagesDisplayedList.size}", maxLines = 1) },
+                    label = {  Text("Images: $imagesDisplayedCount", maxLines = 1) },
                     selected = true,
                     avatar = {
                         Icon(
@@ -518,17 +523,21 @@ private fun ImageDisplay(
     iconPainter: Painter = ColorPainter(Color.Black),
 ) {
     val painter by rememberAsyncImage(imageData, false, iconPainter)
+    var info by remember { mutableStateOf(false) }
     Column(
         modifier
             .background(Color.Black)
             .onClick {},
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+
+
         Row(
             Modifier.fillMaxWidth()
                 .height(35.dp),
 
         ) {
+
             Row(
                 Modifier.fillMaxHeight()
                     .weight(1f),
@@ -552,6 +561,7 @@ private fun ImageDisplay(
                     )
                     .toLocalDateTime()
                     .format(DateTimeFormatter.ofPattern("HH:mm dd MMMM yyyy"))
+
                 AutoResizeText(
                     date,
                     modifier = Modifier
@@ -568,6 +578,18 @@ private fun ImageDisplay(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
+                    Icons.Outlined.Info,
+                    contentDescription = "Info",
+                    Modifier
+                        .padding(5.dp)
+                        .fillMaxHeight()
+                        .aspectRatio(1f)
+                        .clickable {
+                            info = !info
+                        },
+                    tint = Color.White
+                )
+                Icon(
                     Icons.Outlined.Close,
                     contentDescription = "Clear",
                     Modifier
@@ -581,20 +603,255 @@ private fun ImageDisplay(
                 )
             }
         }
-        Box(
+        Row(
             Modifier
                 .weight(1f)
                 .fillMaxWidth(),
-            contentAlignment = Alignment.Center
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Image(
-                painter = painter,
-                contentDescription = "",
-                modifier = Modifier
-                    .aspectRatio(imageData.imageSize.ratio)
-                    .fillMaxSize()
-                    .background(color = colorScheme.onBackground)
-            )
+            Box(
+                Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painter,
+                    contentDescription = "",
+                    modifier = Modifier
+                        .aspectRatio(imageData.imageSize.ratio)
+                        .fillMaxSize()
+                        .background(color = colorScheme.onBackground)
+                )
+            }
+            if (info) {
+                Column(
+                    Modifier
+                        .fillMaxWidth(.33f)
+                        .widthIn(max = 300.dp)
+                        .fillMaxHeight()
+                ) {
+                    AutoResizeText(
+                        Path(imageData.filePaths.first()).name,
+                        modifier = Modifier
+                            .padding(4.dp)
+                            .height(30.dp)
+                            .fillMaxWidth(),
+                        color = Color.White,
+                    )
+                    Row(
+                        Modifier
+                            .padding(5.dp)
+                            .fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val date = imageData
+                            .dateTime
+                            .toInstant()
+                            .atOffset(
+                                ZoneOffset.ofTotalSeconds(TimeZone.getDefault().rawOffset / 1000)
+                            )
+                            .toLocalDateTime()
+                            .format(DateTimeFormatter.ofPattern("HH:mm\ndd MMMM yyyy"))
+
+                        Icon(
+                            Icons.Outlined.Event,
+                            "Date",
+                            Modifier
+                                .padding(10.dp)
+                                .height(25.dp)
+                                .aspectRatio(1f),
+                            tint = Color.White
+                        )
+                        Text(
+                            date,
+                            color = Color.White,
+                            fontSize = 18.sp
+                        )
+                    }
+                    Row(
+                        Modifier
+                            .padding(5.dp)
+                            .fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Outlined.Height,
+                            "Image Size",
+                            Modifier
+                                .padding(10.dp)
+                                .height(25.dp)
+                                .aspectRatio(1f),
+                            tint = Color.White
+                        )
+                        Row {
+                            Text(
+                                "${imageData.imageSize.x}x${imageData.imageSize.y}",
+                                color = Color.White,
+                                fontSize = 18.sp,
+                                modifier = Modifier.padding(horizontal = 10.dp)
+                            )
+
+                            Text(
+                                "${imageData.byteSize / 1024L} KiB",
+                                color = Color.White,
+                                fontSize = 18.sp,
+                                modifier = Modifier.padding(horizontal = 10.dp)
+                            )
+                        }
+                    }
+                    Row(
+                        Modifier
+                            .padding(5.dp)
+                            .fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val allNull = imageData.cameraInfo.name == null &&
+                                imageData.cameraInfo.iso == null &&
+                                imageData.cameraInfo.flash == null &&
+                                imageData.cameraInfo.fNumber == null &&
+                                imageData.cameraInfo.apertureValue == null &&
+                                imageData.cameraInfo.colorSpace == null &&
+                                imageData.cameraInfo.exposureTime == null &&
+                                imageData.cameraInfo.exposureCompensation == null &&
+                                imageData.cameraInfo.focalLength == null
+                        val cameraInfoIcon = if (allNull) {
+                            Icons.Outlined.NoPhotography
+                        } else {
+                            Icons.Outlined.Camera
+                        }
+                        Icon(
+                            cameraInfoIcon,
+                            "Camera Info",
+                            Modifier
+                                .padding(10.dp)
+                                .height(25.dp)
+                                .aspectRatio(1f),
+                            tint = Color.White
+                        )
+                        Column {
+                            Row {
+                                imageData.cameraInfo.name?.let {
+                                    Text(
+                                        it,
+                                        color = Color.White,
+                                        fontSize = 18.sp,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                                    )
+                                }
+                            }
+
+                            Row {
+                                imageData.cameraInfo.fNumber?.let {
+                                    Text(
+                                        "f/$it",
+                                        color = Color.White,
+                                        fontSize = 18.sp,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                                    )
+                                }
+                                imageData.cameraInfo.focalLength?.let {
+                                    Text(
+                                        "$it mm" ,
+                                        color = Color.White,
+                                        fontSize = 18.sp,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                                    )
+                                }
+                            }
+
+                            Row {
+                                imageData.cameraInfo.iso?.let {
+                                    Text(
+                                        "$it ISO" ,
+                                        color = Color.White,
+                                        fontSize = 18.sp,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                                    )
+                                }
+
+                                imageData.cameraInfo.exposureTime?.let {
+                                    Text(
+                                        if (it == "1" || it == "1.0") "$it sec" else "$it secs",
+                                        color = Color.White,
+                                        fontSize = 18.sp,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                                    )
+                                }
+                            }
+                            Row {
+                                imageData.cameraInfo.flash?.let {
+                                    Text(
+                                        it,
+                                        color = Color.White,
+                                        fontSize = 18.sp,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.weight(1f))
+
+                    Row(
+                        Modifier
+                            .padding(5.dp)
+                            .fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val filePaths = StringBuilder().apply {
+                            imageData.filePaths.forEach {
+                                this.append("$it\n")
+                            }
+                        }.toString()
+                        Icon(
+                            Icons.Outlined.Folder,
+                            "File paths",
+                            Modifier
+                                .padding(10.dp)
+                                .height(25.dp)
+                                .aspectRatio(1f),
+                            tint = Color.White
+                        )
+                        Text(
+                            filePaths,
+                            modifier = Modifier
+                                .padding(4.dp)
+                                .fillMaxWidth(),
+                            color = Color.White,
+                            fontSize = 12.sp
+                        )
+                    }
+
+                    Row(
+                        Modifier
+                            .padding(5.dp)
+                            .fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Outlined.Numbers,
+                            "Hash",
+                            Modifier
+                                .padding(10.dp)
+                                .height(25.dp)
+                                .aspectRatio(1f),
+                            tint = Color.DarkGray
+                        )
+                        Text(
+                            imageData.hash,
+                            modifier = Modifier
+                                .padding(4.dp)
+                                .fillMaxWidth(),
+                            color = Color.DarkGray,
+                            fontStyle = FontStyle.Italic,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+            }
         }
         ImageCarousel(
             Modifier.height(40.dp)
@@ -724,9 +981,9 @@ private fun getImagesForCarousel(
         parentWidth > 0 && height > 0 &&
         leftWidth < parentWidth/2 &&
         rightWidth < parentWidth/2 &&
-        (leftIndex >= 0 || rightIndex <= imagesDisplayedList.size)
+        (leftIndex >= 0 || rightIndex <= imagesDisplayedCount)
     ) {
-        if (rightIndex < imagesDisplayedList.size) {
+        if (rightIndex < imagesDisplayedCount) {
             right.add(imagesDisplayedList[rightIndex])
             rightWidth += imageWidth + padding.value
             rightIndex++
@@ -787,12 +1044,13 @@ fun updateImages() {
 
     imagesDisplayed = getImagesByDate(
         FilterJunction(JunctionType.CONJUNCTION, searchFilterDisjunction, tagFilterConjunction.toConjunction())
-    )
-    imagesDisplayedList = mutableListOf<ImageData>().apply {
-        imagesDisplayed.forEach {
-            addAll(it)
-        }
-    }.toList()
+    ).also {
+        imagesDisplayedList = mutableListOf<ImageData>().apply {
+            it.forEach {
+                addAll(it)
+            }
+        }.toList().also { imagesDisplayedCount = it.size }
+    }
 }
 
 private fun selectImage(image: ImageData) {
