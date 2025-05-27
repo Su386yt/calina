@@ -1067,7 +1067,7 @@ private fun getImagesForCarousel(
         parentWidth > 0 && height > 0 &&
         leftWidth < parentWidth/2 &&
         rightWidth < parentWidth/2 &&
-        (leftIndex >= 0 || rightIndex <= imagesDisplayedCount)
+        (leftIndex >= 0 || rightIndex < imagesDisplayedCount)
     ) {
         if (rightIndex < imagesDisplayedCount) {
             right.add(imagesDisplayedList[rightIndex])
