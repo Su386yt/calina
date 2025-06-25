@@ -5,104 +5,53 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
+import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import dev.su386.calina.CalinaTheme
+import dev.su386.calina.app.App.activeIndex
 import dev.su386.calina.utils.AutoResizeText
 
-
+// TODO: Remove this when jetpack compose v1.9.0-alpha03 is released -- see https://youtrack.jetbrains.com/issue/CMP-8323/Material3-Modifier.badgeBounds-crashes-in-1.9.0-alpha01
+private var firstCompose = true
 @Composable
 fun NavRail(modifier: Modifier = Modifier, vararg iconsData: NavRailIconData) {
-    Column (
+    NavigationRail (
         modifier = modifier
             .clip(RoundedCornerShape(7.dp))
             .fillMaxWidth()
             .fillMaxHeight()
-            .background(MaterialTheme.colors.surface),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally
+            .background(colorScheme.surface),
     ) {
+        if (firstCompose) {
+            firstCompose = false
+            return@NavigationRail
+        }
         for (i in iconsData.indices) {
-            NavRailIcon(
-                modifier = Modifier
-                    .padding(5.dp),
-                name = iconsData[i].name,
-                icon = iconsData[i].icon,
-                iconIndex = i,
-                backgroundColor = MaterialTheme.colors.surface,
-                activeColor = MaterialTheme.colors.secondary,
-                textColor = MaterialTheme.colors.onBackground,
-                onClick = iconsData[i].onClick
+            NavigationRailItem(
+                icon = {
+                    Icon(
+                        iconsData[i].icon,
+                        contentDescription = iconsData[i].name,
+                    )
+                },
+                label = { Text(iconsData[i].name) },
+                selected = i == activeIndex,
+                onClick = { activeIndex = i; iconsData[i].onClick() },
             )
-
-        }
-
-    }
-}
-
-@Composable
-fun NavRailIcon (
-    modifier: Modifier = Modifier,
-    name: String,
-    icon: ImageVector,
-    iconIndex: Int,
-    backgroundColor: Color,
-    activeColor: Color,
-    textColor: Color,
-    onClick: () -> Unit = {}
-) {
-    CalinaTheme {
-        Box(
-            modifier
-                .aspectRatio(1f)
-                .fillMaxSize(.9f)
-                .background(
-                    color = if (iconIndex == App.activeIndex) {
-                        activeColor
-                    } else {
-                        backgroundColor
-                    },
-                    shape = RoundedCornerShape(25)
-                )
-                .clickable(
-                    onClick = {
-                        App.activeIndex = iconIndex
-                        onClick.invoke()
-                    },
-                ),
-            contentAlignment = Alignment.Center // Centers the Column inside the Box
-        ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = name,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    tint = textColor
-                )
-
-                AutoResizeText(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .fillMaxHeight(0.25f),
-                    color = textColor,
-                    text = name
-                )
-            }
         }
     }
-
 }
 
 

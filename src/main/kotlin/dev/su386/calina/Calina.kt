@@ -1,22 +1,12 @@
 package dev.su386.calina
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.darkColors
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.ApplicationScope
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import dev.su386.calina.Calina.applicationScope
 import dev.su386.calina.Calina.exitAppSafely
 import dev.su386.calina.app.App
+import dev.su386.calina.app.theme.CalinaTheme
 import dev.su386.calina.images.ImageManager.cleanMissingImages
 import dev.su386.calina.images.ImageManager.cleanOrphanedIcons
 import dev.su386.calina.images.ImageManager.cleanSingleImages
@@ -30,35 +20,9 @@ import dev.su386.calina.tasks.*
 import dev.su386.calina.tasks.TaskManager.onStart
 import dev.su386.calina.tasks.TaskManager.register
 import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.concurrent.atomic.AtomicLong
 import javax.imageio.ImageIO
-
-
-@Composable
-fun CalinaTheme(content: @Composable () -> Unit) {
-    val colors = remember {
-        darkColors(
-            primary = Color(0xFF2f65b7),
-            primaryVariant = Color(0xFF4e75bf),
-            secondary = Color(0xFFABA2EE),
-            background = Color(0xFF080019),
-            surface = Color(0xFF211e2e),
-            error = Color(0xFFC14953),
-            onPrimary = Color(0xFF2F2F2F),
-            onSecondary = Color(0xFF101935),
-            onBackground = Color(0xFFFFFFFF),
-            onSurface = Color(0xFFFFFFFF),
-            onError = Color(0xFF2F2F2F)
-        )
-    }
-
-    MaterialTheme( // line 29
-        colors = colors,
-        content = content
-    )
-}
 
 fun main() = runBlocking {
     register(OnStartTask("Check ImageIO Plugins") { ImageIO.scanForPlugins() })

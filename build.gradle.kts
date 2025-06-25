@@ -1,7 +1,8 @@
+import org.gradle.kotlin.dsl.kotlin
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
-    kotlin("jvm") version "2.1.10"
+    kotlin("jvm")
     id("org.jetbrains.compose")
     id("org.jetbrains.kotlin.plugin.compose")
 }
@@ -21,6 +22,9 @@ dependencies {
     // (in a separate module for demo project and in testMain).
     // With compose.desktop.common you will also lose @Preview functionality
     implementation(compose.desktop.currentOs)
+    implementation(compose.materialIconsExtended)
+    implementation(compose.material3)
+    implementation(compose.ui)
     testImplementation(kotlin("test"))
     implementation("com.google.code.gson:gson:2.12.1")
     implementation("com.drewnoakes:metadata-extractor:2.18.0")

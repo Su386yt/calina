@@ -12,6 +12,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,26 +44,24 @@ fun App() {
         Row(
             modifier = Modifier
                 .fillMaxSize(1f)
-                .background(MaterialTheme.colors.background)
+                .background(colorScheme.background)
                 .focusable(true)
                 .onClick {
                     focusManager.clearFocus()
                 },
         ) {
-            // Nav Rail
-            Column {
-                // Nav Bar Box
-                Box(modifier = Modifier
-                    .fillMaxHeight()
-                    .width(75.dp)
-                ) {
-                    NavRail(
-                        modifier = Modifier
-                            .padding(start = 2.dp, end = 6.dp, top = 3.dp, bottom = 3.dp),
-                        iconsData = panels.toTypedArray(),
-                    )
-
-                }
+            Box(
+                Modifier
+                .fillMaxHeight()
+                .width(75.dp)
+            ) {
+                NavRail(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth()
+                        .padding(start = 2.dp, end = 6.dp, top = 3.dp, bottom = 3.dp),
+                    iconsData = panels.toTypedArray(),
+                )
             }
 
             // Display
@@ -120,7 +119,7 @@ fun Header(heading: String, modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxHeight()
                 .weight(.1f),
-            color = MaterialTheme.colors.onBackground,
+            color = colorScheme.onBackground,
         )
         Box(
             Modifier.weight(.2f)
@@ -152,7 +151,7 @@ fun SearchBar(modifier: Modifier) {
             modifier = Modifier
                 .fillMaxSize()
                 .clip(RoundedCornerShape(40))
-                .background(color = MaterialTheme.colors.surface)
+                .background(color = colorScheme.surface)
         ) {
             BasicTextField(
                 value = searchBarContent,
@@ -173,7 +172,7 @@ fun SearchBar(modifier: Modifier) {
                 },
                 maxLines = 1,
                 textStyle = TextStyle(
-                    color = MaterialTheme.colors.onSurface,
+                    color = colorScheme.onSurface,
                 ),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
@@ -189,7 +188,7 @@ fun SearchBar(modifier: Modifier) {
                         )
 
                     },
-                cursorBrush = SolidColor(MaterialTheme.colors.onSurface)
+                cursorBrush = SolidColor(colorScheme.onSurface)
             )
         }
     }

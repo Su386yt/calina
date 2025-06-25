@@ -7,7 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -103,7 +103,7 @@ private fun Day(modifier: Modifier = Modifier, date: Date, images: Array<ImageDa
         modifier = modifier
             .height(IntrinsicSize.Min)
             .clip(RoundedCornerShape(10.dp))
-            .background(color = MaterialTheme.colors.surface)
+            .background(color = colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(5.dp).fillMaxWidth()) {
             val timezone = TimeZone.getDefault()
@@ -117,7 +117,7 @@ private fun Day(modifier: Modifier = Modifier, date: Date, images: Array<ImageDa
                     .padding(horizontal = 10.dp, vertical = 5.dp)
                     .fillMaxWidth()
                     .height(40.dp),
-                color = MaterialTheme.colors.onBackground,
+                color = colorScheme.onBackground,
                 align = Alignment.CenterStart,
             )
 
