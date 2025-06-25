@@ -14,7 +14,7 @@ import java.util.*
 class OnCloseTask(
     taskName: String,
     coroutineDispatcher: CoroutineDispatcher = Default,
-    onRun: () -> Unit
+    onRun: suspend () -> Unit
 ): ScheduledTask(
     taskName = taskName,
     runIn = Long.MAX_VALUE,

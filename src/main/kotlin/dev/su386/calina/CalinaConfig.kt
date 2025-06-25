@@ -2,7 +2,9 @@ package dev.su386.calina
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
-import dev.su386.calina.config.*
+import dev.su386.calina.config.Config
+import dev.su386.calina.config.Decimal
+import dev.su386.calina.config.StringList
 import dev.su386.calina.data.Database
 
 object CalinaConfig: Config("Settings", "") {

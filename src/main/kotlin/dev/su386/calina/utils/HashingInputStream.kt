@@ -8,7 +8,6 @@ class HashingInputStream(
     private val inputStream: InputStream,
     private val messageDigest: MessageDigest
 ) : InputStream() {
-
     private var streamPosition: Long = 0
 
     fun readTillEnd() {

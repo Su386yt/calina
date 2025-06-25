@@ -23,7 +23,7 @@ class RepeatTask(
     val taskCooldown: TaskCooldown,
     startImmediately: Boolean = true,
     coroutineDispatcher: CoroutineDispatcher = Default,
-    onRun: (TaskCooldown) -> Unit
+    onRun: suspend (TaskCooldown) -> Unit
 ): ScheduledTask(
     taskName = taskName,
     runIn = taskCooldown.duration,

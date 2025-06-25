@@ -6,13 +6,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.ScaleFactor
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import kotlin.math.min
 
 @Composable
 fun AutoResizeText(
@@ -60,4 +68,43 @@ fun AutoResizeText(
     }
 }
 
+fun Modifier.fillMaxWidthToMax(
+    fraction: Float = 1f,
+    maxWidthDp: Dp
+): Modifier = this.then(
+    Modifier.layout { measurable, constraints ->
+        // `this` is a MeasureScope: Dp.toPx() is in scope here
+        val maxPx    = constraints.maxWidth
+        val clampPx  = maxWidthDp.toPx().toInt()
+        val targetPx = min((maxPx * fraction).toInt(), clampPx)
+
+        // force measurement to exactly `targetPx`
+        val placeable = measurable.measure(
+            constraints.copy(minWidth = targetPx, maxWidth = targetPx)
+        )
+        layout(placeable.width, placeable.height) {
+            placeable.placeRelative(0, 0)
+        }
+    }
+)
+
+fun Modifier.fillMaxHeightToMax(
+    fraction: Float = 1f,
+    maxHeightDp: Dp
+): Modifier = this.then(
+    Modifier.layout { measurable, constraints ->
+        // `this` is a MeasureScope: Dp.toPx() is in scope here
+        val maxPx = constraints.maxHeight
+        val clampPx = maxHeightDp.toPx().toInt()
+        val targetPx = min((maxPx * fraction).toInt(), clampPx)
+
+        // force measurement to exactly `targetPx`
+        val placeable = measurable.measure(
+            constraints.copy(minHeight = targetPx, maxHeight = targetPx)
+        )
+        layout(placeable.width, placeable.height) {
+            placeable.placeRelative(0, 0)
+        }
+    }
+)
 

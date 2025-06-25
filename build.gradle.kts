@@ -25,6 +25,7 @@ dependencies {
     implementation(compose.materialIconsExtended)
     implementation(compose.material3)
     implementation(compose.ui)
+
     testImplementation(kotlin("test"))
     implementation("com.google.code.gson:gson:2.12.1")
     implementation("com.drewnoakes:metadata-extractor:2.18.0")

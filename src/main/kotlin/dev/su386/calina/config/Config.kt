@@ -4,7 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.MaterialTheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -57,7 +57,7 @@ open class Config(
                                     .padding(20.dp)
                                     .fillMaxWidth()
                                     .height(50.dp),
-                                color = MaterialTheme.colors.onBackground,
+                                color = MaterialTheme.colorScheme.onBackground,
                                 align = Alignment.CenterStart,
                             )
                         }
@@ -89,7 +89,7 @@ open class Config(
                             .fillMaxWidth()
                             .height(IntrinsicSize.Min)
                             .clip(RoundedCornerShape(16.dp))
-                            .background(MaterialTheme.colors.surface)
+                            .background(MaterialTheme.colorScheme.surface)
                     ) {
                         Column(
                             modifier = Modifier
@@ -102,7 +102,7 @@ open class Config(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(40.dp),
-                                color = MaterialTheme.colors.onBackground,
+                                color = MaterialTheme.colorScheme.onBackground,
                                 align = Alignment.CenterStart,
                             )
 

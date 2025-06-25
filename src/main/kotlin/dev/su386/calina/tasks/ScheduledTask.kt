@@ -19,7 +19,7 @@ open class ScheduledTask(
     open val taskName: String,
     open val runIn: Long,
     open val coroutineDispatcher: CoroutineDispatcher = Default,
-    open val onRun: () -> Unit
+    open val onRun: suspend () -> Unit
 ) {
     open val createTime = System.currentTimeMillis()
     open val runAt get() = createTime + this.runIn

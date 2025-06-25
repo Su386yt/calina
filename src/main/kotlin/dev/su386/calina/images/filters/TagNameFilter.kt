@@ -1,7 +1,7 @@
 package dev.su386.calina.images.filters
 
 import dev.su386.calina.images.ImageData
-import dev.su386.calina.images.Tag
+import dev.su386.calina.images.tags.Tag
 
 /**
  * Filters images that have the tag with a specific name.
