@@ -10,18 +10,28 @@ import androidx.compose.foundation.onClick
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Photo
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Photo
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.ExpandedDockedSearchBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.SearchBarValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopSearchBar
+import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -37,6 +47,7 @@ import dev.su386.calina.app.App.navigationStack
 import dev.su386.calina.app.App.panels
 import dev.su386.calina.app.App.searchBarContent
 import dev.su386.calina.utils.AutoResizeText
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -152,48 +163,48 @@ fun CalinaSearchBar(
     modifier: Modifier = Modifier
 ) {
     // Controls expansion state of the search bar
-    var expanded by rememberSaveable { mutableStateOf(false) }
-
-
+    val searchBarState = rememberSearchBarState()
+    val scope = rememberCoroutineScope()
+    val scrollBehavior = SearchBarDefaults.enterAlwaysSearchBarScrollBehavior()
+    val inputField =
+        @Composable {
+            SearchBarDefaults.InputField(
+                modifier = Modifier,
+                searchBarState = searchBarState,
+                textFieldState = textFieldState,
+                onSearch = { scope.launch { searchBarState.animateToCollapsed() } },
+                placeholder = { Text("Search...") },
+                leadingIcon = {
+                    if (searchBarState.currentValue == SearchBarValue.Expanded) {
+                        IconButton(
+                            onClick = { scope.launch { searchBarState.animateToCollapsed() } }
+                        ) {
+                            Icon(Icons.AutoMirrored.Default.ArrowBack, contentDescription = "Back")
+                        }
+                    } else {
+                        Icon(Icons.Default.Search, contentDescription = null)
+                    }
+                },
+                trailingIcon = { Icon(Icons.Default.MoreVert, contentDescription = null) },
+            )
+        }
     Box(
         modifier
             .fillMaxSize()
             .semantics { isTraversalGroup = true }
     ) {
-        SearchBar(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .semantics { traversalIndex = 0f },
-            inputField = {
-                SearchBarDefaults.InputField(
-                    query = textFieldState.text.toString(),
-                    onQueryChange = { textFieldState.edit { replace(0, length, it) } },
-                    onSearch = {
-                        onSearch(textFieldState.text.toString())
-                        expanded = false
-                    },
-                    expanded = expanded,
-                    onExpandedChange = { expanded = it },
-                    placeholder = { Text("Search...") }
-                )
-            },
-            expanded = expanded,
-            onExpandedChange = { expanded = it },
-        ) {
-            // Display search results in a scrollable column
-            Column(Modifier.verticalScroll(rememberScrollState())) {
-                searchResults.forEach { result ->
-                    ListItem(
-                        headlineContent = { Text(result) },
-                        modifier = Modifier
-                            .clickable {
-                                textFieldState.edit { replace(0, length, result) }
-                                expanded = false
-                            }
-                            .fillMaxWidth()
-                    )
-                }
-            }
+        TopSearchBar(
+            scrollBehavior = scrollBehavior,
+            state = searchBarState,
+            inputField = inputField,
+        )
+        ExpandedDockedSearchBar(state = searchBarState, inputField = inputField) {
+//            SearchResults(
+//                onResultClick = { result ->
+//                    textFieldState.setTextAndPlaceCursorAtEnd(result)
+//                    scope.launch { searchBarState.animateToCollapsed() }
+//                }
+//            )
         }
     }
 }
