@@ -1105,11 +1105,11 @@ fun updateImages() {
         )
     }
     val searchFilterDisjunction = mutableListOf(
-        DayOfWeekFilter(searchBarContent),
-        DayOfMonthFilter(searchBarContent),
-        MonthFilter(searchBarContent),
-        YearFilter(searchBarContent),
-        TagNameFilter(searchBarContent),
+        DayOfWeekFilter(searchBarContent.toString()),
+        DayOfMonthFilter(searchBarContent.toString()),
+        MonthFilter(searchBarContent.toString()),
+        YearFilter(searchBarContent.toString()),
+        TagNameFilter(searchBarContent.toString()),
         conjunction.toConjunction()
     ).toDisJunction()
 
