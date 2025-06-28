@@ -11,7 +11,6 @@ import androidx.compose.ui.unit.dp
 import dev.su386.calina.Calina.exitAppSafely
 import dev.su386.calina.app.App
 import dev.su386.calina.app.App.navigationStack
-import dev.su386.calina.data.Database
 import dev.su386.calina.utils.AutoResizeText
 import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -23,10 +22,6 @@ object TaskManager {
     private var starting = true
 
     init {
-        register(OnStartTask("Load Persistent Tasks") {
-            loadPersistentTasks()
-        })
-
         register(OnStartTask("Run Task Manager") {
             GlobalScope.launch {
                 try {
@@ -82,11 +77,6 @@ object TaskManager {
 
             lastRunTime = System.currentTimeMillis()
         }
-    }
-
-    private fun loadPersistentTasks() {
-        val persistentTasks = Database.readData<Array<ScheduledTask>>("tasks/persistent.json") ?: arrayOf()
-        persistentTasks.forEach { register(it) }
     }
 
     fun onStart() {
