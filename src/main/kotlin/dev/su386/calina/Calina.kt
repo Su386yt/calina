@@ -108,14 +108,18 @@ fun main() = runBlocking {
         Window(
             onCloseRequest = ::exitAppSafely,
             onKeyEvent = {
-                if (it.key == Key.ShiftLeft && it.type == KeyEventType.KeyDown) {
-                    shiftPressed = true
-                    true
-                } else if (it.key == Key.ShiftLeft && it.type == KeyEventType.KeyUp) {
-                    shiftPressed = false
-                    true
-                } else {
-                    false
+                when (it.key) {
+                    Key.ShiftLeft if it.type == KeyEventType.KeyDown -> {
+                        shiftPressed = true
+                        true
+                    }
+                    Key.ShiftLeft if it.type == KeyEventType.KeyUp -> {
+                        shiftPressed = false
+                        true
+                    }
+                    else -> {
+                        false
+                    }
                 }
             }
         ) {

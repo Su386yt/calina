@@ -1,6 +1,5 @@
 package dev.su386.calina.utils
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -11,36 +10,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.util.lerp
-import dev.chrisbanes.haze.HazeStyle
-import dev.chrisbanes.haze.hazeEffect
-import dev.chrisbanes.haze.materials.CupertinoMaterials
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
-import dev.chrisbanes.haze.materials.HazeMaterials
-import dev.chrisbanes.haze.materials.HazeMaterials.ultraThin
-import java.lang.Math.pow
 import kotlin.math.abs
 import kotlin.math.min
 import kotlin.math.pow
-import kotlin.math.sqrt
 
 @Composable
 fun AutoResizeText(
@@ -250,19 +235,18 @@ fun Modifier.sunBackground(
                 solarMidnight to .5f,
                 solarMidnight + 24 * 60 * 60 * 1000 to .5f,
             ).sortedBy { it.first }
-            val idx = stops.indexOfFirst { it.first > time }
+            val index = stops.indexOfFirst { it.first > time }
+            val (t1, t2) = stops[index - 1] to stops[index]
 
-            val (x1, x2) = stops[idx - 1] to stops[idx]
+            val segmentLength = abs(t2.first - t1.first).let { if (it == 0L) 1L else it }
 
-            val segmentLength = abs(x2.first - x1.first).let { if (it == 0L) 1L else it }
-            val elapsed = abs(time - x1.first).coerceIn(0L, segmentLength)
+            val elapsed = abs(time - t1.first).coerceIn(0L, segmentLength)
             val fracAlong = elapsed.toFloat() / segmentLength.toFloat()
-            val frac = x1.second + (x2.second - x1.second) * fracAlong
-            println("$hour $frac")
+
+            val frac = t1.second + (t2.second - t1.second) * fracAlong
             val width = size.width * frac
 
             val center = Offset(x = width, y = height)
-            println(center)
             val brush = Brush.radialGradient(
                 colorStops = nonLinearStops,
                 center = center,
@@ -280,14 +264,15 @@ fun pickColorFromStops(point: Long, stops: Array<Pair<Long, Color>>): Color = st
     .let { colors ->
         val color1 = colors.last { it.first < point }
         val color2 = colors.first { it.first > point }
+
         val range = color2.first - color1.first
+
         val color1Weight = (color2.first - point) / range.toFloat()
         val color2Weight = (point - color1.first) / range.toFloat()
-        val red = color1.second.red * color1Weight + color2.second.red * color2Weight
-        val green = color1.second.green * color1Weight + color2.second.green * color2Weight
+
         return@let Color(
-            red,
-            green,
+            color1.second.red * color1Weight + color2.second.red * color2Weight,
+            color1.second.green * color1Weight + color2.second.green * color2Weight,
             (color1.second.blue * color1Weight + color2.second.blue * color2Weight),
             (color1.second.alpha * color1Weight + color2.second.alpha * color2Weight),
         )

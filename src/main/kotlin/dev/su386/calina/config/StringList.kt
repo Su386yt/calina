@@ -72,7 +72,7 @@ class StringList(
                 }
                 TextField(
                     value = TextFieldValue(text = text.value, selection = selection),
-                    onValueChange = { it ->
+                    onValueChange = {
                         val previousSize = value.size
                         text.value = it.text
                         selection = it.selection

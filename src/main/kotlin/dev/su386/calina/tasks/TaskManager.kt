@@ -1,7 +1,7 @@
 package dev.su386.calina.tasks
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.LinearProgressIndicator
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -15,8 +15,6 @@ import dev.su386.calina.data.Database
 import dev.su386.calina.utils.AutoResizeText
 import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.coroutines.CoroutineContext
-import androidx.compose.material.CircularProgressIndicator as CircularProgressIndicator
 
 @OptIn(DelicateCoroutinesApi::class)
 object TaskManager {
@@ -43,7 +41,7 @@ object TaskManager {
     }
 
     /**
-     * Registers a [ScheduledTask] to be executed in the future. Only tasks with unique task names can be registered. This includes tasks that have been saved persistantly
+     * Registers a [ScheduledTask] to be executed in the future. Only tasks with unique task names can be registered.
      *
      * @param task - Task to be executed
      * @return Returns false if the task with [task.taskName] has already been registered. Otherwise, returns true
@@ -142,14 +140,14 @@ object TaskManager {
         runBlocking {
             val jobs = mutableListOf<Deferred<Unit>>()
 
-            val filtedTasks = tasks
+            val filteredTasks = tasks
                 .filterIsInstance<OnCloseTask>()
 
-            filtedTasks.forEach { jobs.add(it.runBlocking(this@runBlocking)) }
+            filteredTasks.forEach { jobs.add(it.runBlocking(this@runBlocking)) }
 
             jobs.awaitAll()
 
-            println("Completed running ${filtedTasks.size} close tasks")
+            println("Completed running ${filteredTasks.size} close tasks")
         }
     }
 }

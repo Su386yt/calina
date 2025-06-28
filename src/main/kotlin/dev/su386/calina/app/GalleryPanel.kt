@@ -1140,9 +1140,9 @@ fun updateImages() {
     imagesDisplayed = mutableListOf()
     imagesDisplayed = getImagesByDate(
         FilterJunction(JunctionType.CONJUNCTION, searchFilterDisjunction, tagFilterConjunction.toConjunction())
-    ).also {
+    ).also { imagesDisplayed ->
         imagesDisplayedList = mutableListOf<ImageData>().apply {
-            it.forEach {
+            imagesDisplayed.forEach {
                 addAll(it)
             }
         }.toList().also { imagesDisplayedCount = it.size }

@@ -2,6 +2,7 @@ package dev.su386.calina.data
 
 import com.google.gson.ExclusionStrategy
 import com.google.gson.FieldAttributes
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import java.io.File
@@ -15,7 +16,7 @@ object Database {
      * @link https://docs.oracle.com/javase/tutorial/essential/environment/sysprop.html
      */
     val PATH = "${System.getProperty("user.home")}/.calina"
-    val JSON = GsonBuilder()
+    val JSON: Gson = GsonBuilder()
         .setExclusionStrategies(TransientExclusionStrategy())
         .setPrettyPrinting()
         .create()

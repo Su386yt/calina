@@ -159,8 +159,6 @@ class ImageData(
 
 
     val tags: Set<UUID> get() = Tag.tags.filter { it.value.imageHashes.contains(hash) }.keys.toSet()
-    @Transient
-    var updateCard = mutableIntStateOf(0)
 
     /**
      * Adds a new tag to this image
@@ -215,19 +213,19 @@ class ImageData(
     fun checkFileHashes(): Int {
         val validPaths = mutableSetOf<String>()
         this.filePaths
-            .forEach {
-                if (File(it).lastModified() < this.timeSinceLastHashCheck) {
-                    validPaths.add(it)
+            .forEach { path ->
+                if (File(path).lastModified() < this.timeSinceLastHashCheck) {
+                    validPaths.add(path)
                     return@forEach
                 }
 
                 val digest = MessageDigest.getInstance("SHA-256")
-                val inputStream = HashingInputStream(FileInputStream(it), digest)
+                val inputStream = HashingInputStream(FileInputStream(path), digest)
                 inputStream.readAllBytes()
                 inputStream.close()
                 val hash = digest.digest().joinToString("") { "%02x".format(it) }
                 if (hash == this.hash) {
-                    validPaths.add(it)
+                    validPaths.add(path)
                 }
 
                 this.timeSinceLastHashCheck = System.currentTimeMillis()

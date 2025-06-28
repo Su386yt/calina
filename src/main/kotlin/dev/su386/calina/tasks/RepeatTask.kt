@@ -3,7 +3,6 @@ package dev.su386.calina.tasks
 import com.google.gson.annotations.SerializedName
 import dev.su386.calina.tasks.RepeatTask.TaskCooldown.Companion.ms
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.Default
 import java.util.*
 
@@ -46,7 +45,6 @@ class RepeatTask(
     constructor(
         taskName: String = UUID.randomUUID().toString(),
         taskCooldown: Long,
-        persistentCooldown: Boolean = false,
         startImmediately: Boolean = true,
         coroutineDispatcher: CoroutineDispatcher = Default,
         onRun: (TaskCooldown) -> Unit

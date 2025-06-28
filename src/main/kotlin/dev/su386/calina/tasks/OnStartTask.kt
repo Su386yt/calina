@@ -1,8 +1,10 @@
 package dev.su386.calina.tasks
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers.Default
-import java.util.*
+import kotlinx.coroutines.async
 
 /**
  * Runs when application is started. Preferred over directly calling in main or init methods, as this allows for coroutine management, and allows for more precise logging and startup management.

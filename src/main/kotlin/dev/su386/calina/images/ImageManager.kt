@@ -6,7 +6,6 @@ import dev.su386.calina.data.Database.readData
 import dev.su386.calina.data.Database.writeData
 import dev.su386.calina.images.ImageData.Companion.toImageData
 import dev.su386.calina.images.filters.Filter
-import dev.su386.calina.images.tags.Tag
 import dev.su386.calina.utils.FileUtils.safelyDelete
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
@@ -170,9 +169,6 @@ object ImageManager {
 
     fun getImagesByDate(filter: Filter): List<List<ImageData>> {
         val timeZone = TimeZone.getDefault()
-        val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).apply {
-            setTimeZone(timeZone)
-        }
 
         return images
             .values

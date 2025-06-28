@@ -1,7 +1,6 @@
 package dev.su386.calina.images.filters
 
 import dev.su386.calina.images.ImageData
-import java.text.SimpleDateFormat
 import java.util.*
 
 /**

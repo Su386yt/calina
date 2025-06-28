@@ -11,7 +11,7 @@ class FilterJunction(
     private val junctionType: JunctionType, private vararg val filters: Filter
 
 ): Filter() {
-    constructor(junctionType: JunctionType, filters: List<Filter>,): this(junctionType, *filters.toTypedArray())
+    constructor(junctionType: JunctionType, filters: List<Filter>): this(junctionType, *filters.toTypedArray())
 
     override fun isValidImage(image: ImageData): Boolean {
         if (filters.isEmpty()) {
