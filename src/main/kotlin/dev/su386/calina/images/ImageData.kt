@@ -1,6 +1,5 @@
 package dev.su386.calina.images
 
-import androidx.compose.runtime.mutableIntStateOf
 import com.drew.imaging.ImageMetadataReader
 import com.drew.metadata.exif.ExifIFD0Directory
 import com.drew.metadata.exif.ExifSubIFDDirectory

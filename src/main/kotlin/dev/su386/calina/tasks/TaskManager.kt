@@ -39,7 +39,7 @@ object TaskManager {
      * Registers a [ScheduledTask] to be executed in the future. Only tasks with unique task names can be registered.
      *
      * @param task - Task to be executed
-     * @return Returns false if the task with [task.taskName] has already been registered. Otherwise, returns true
+     * @return Returns false if the task with [ScheduledTask.taskName] has already been registered. Otherwise, returns true
      * @see dev.su386.calina.tasks.ScheduledTask
      */
     fun register(task: ScheduledTask): Boolean {

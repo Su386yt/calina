@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
 import java.io.File
-import java.text.SimpleDateFormat
 import java.time.ZoneId
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -167,22 +166,18 @@ object ImageManager {
         jobs.awaitAll().sum()
     }
 
-    fun getImagesByDate(filter: Filter): List<List<ImageData>> {
-        val timeZone = TimeZone.getDefault()
-
-        return images
-            .values
-            .sortedByDescending { it.date }
-            .filter { filter.isValidImage(it) }
-            .groupBy {
-                it.dateTime.toInstant()
-                    .atZone(ZoneId.systemDefault())
-                    .toLocalDate()
-                    .atStartOfDay(ZoneId.systemDefault())
-                    .toInstant()
-                    .toEpochMilli()
-            }
-            .values
-            .toList()
-    }
+    fun getImagesByDate(filter: Filter): List<List<ImageData>> = images
+        .values
+        .sortedByDescending { it.date }
+        .filter { filter.isValidImage(it) }
+        .groupBy {
+            it.dateTime.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate()
+                .atStartOfDay(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli()
+        }
+        .values
+        .toList()
 }
