@@ -32,6 +32,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
     implementation("com.twelvemonkeys.imageio:imageio-jpeg:3.12.0")
     implementation("org.apache.commons:commons-imaging:1.0.0-alpha5")
+    implementation("dev.chrisbanes.haze:haze:1.6.5")
+    implementation("dev.chrisbanes.haze:haze-materials:1.6.5")
 }
 
 compose.desktop {

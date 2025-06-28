@@ -32,6 +32,10 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.materials.CupertinoMaterials
+import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.su386.calina.Calina.shiftPressed
 import dev.su386.calina.app.App.closePopup
 import dev.su386.calina.app.App.openPopup
@@ -70,24 +74,24 @@ private var imagesDisplayedCount by mutableIntStateOf(0)
 
 @Composable
 fun GalleryPanel() {
-    Column(Modifier.fillMaxSize()) {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+        GalleryWaterfall(Modifier.fillMaxWidth())
         FilterBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp)
         )
-        GalleryWaterfall(Modifier.fillMaxWidth())
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalHazeMaterialsApi::class)
 @Composable
 fun FilterBar(modifier: Modifier) {
     Row(
         modifier
             .clip(RoundedCornerShape(17))
-            .background(colorScheme.surface)
-            .border(1.dp, colorScheme.background),
+            .hazeSource(LocalHazeState.current,4f)
+            .hazeEffect(LocalHazeState.current, CupertinoMaterials.thin()),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         if (selectedHashes.isNotEmpty()) {
@@ -389,6 +393,9 @@ fun GalleryWaterfall(modifier: Modifier) {
         state = listState,
         modifier = modifier
     ) {
+        item {
+            Spacer(Modifier.height(55.dp))
+        }
         items(imagesDisplayed, key = { it.first().dateTime }) { imageGroup ->
             Day(
                 modifier = Modifier
@@ -401,6 +408,7 @@ fun GalleryWaterfall(modifier: Modifier) {
     }
 }
 
+@OptIn(ExperimentalHazeMaterialsApi::class)
 @Composable
 private fun Day(modifier: Modifier = Modifier, date: Date, images: Array<ImageData>) {
     var parentWidth by remember { mutableStateOf(0) }
@@ -417,7 +425,8 @@ private fun Day(modifier: Modifier = Modifier, date: Date, images: Array<ImageDa
         modifier = modifier
             .height(IntrinsicSize.Min)
             .clip(RoundedCornerShape(10.dp))
-            .background(color = colorScheme.surface)
+            .hazeSource(state = LocalHazeState.current, 2f)
+            .hazeEffect(LocalHazeState.current, CupertinoMaterials.ultraThin())
     ) {
         Column(modifier = Modifier.padding(5.dp).fillMaxWidth()) {
             val timezone = TimeZone.getDefault()
@@ -440,7 +449,7 @@ private fun Day(modifier: Modifier = Modifier, date: Date, images: Array<ImageDa
                     .fillMaxWidth()
                     .height(IntrinsicSize.Min)
                     .onGloballyPositioned { layoutResult ->
-                        parentWidth = layoutResult.size.width
+                        layoutResult.size.width.let {if (it != 0) parentWidth = it}
                     }
             ) {
                 for (i in 0..<groupedImages.size - 1 ) {
@@ -468,8 +477,6 @@ private fun Day(modifier: Modifier = Modifier, date: Date, images: Array<ImageDa
             }
         }
     }
-
-
 }
 
 @Composable

@@ -10,6 +10,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.window.ApplicationScope
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.su386.calina.Calina.applicationScope
 import dev.su386.calina.Calina.exitAppSafely
 import dev.su386.calina.Calina.shiftPressed
@@ -31,6 +32,7 @@ import dev.su386.calina.tasks.RepeatTask
 import dev.su386.calina.tasks.TaskManager
 import dev.su386.calina.tasks.TaskManager.onStart
 import dev.su386.calina.tasks.TaskManager.register
+import dev.su386.calina.utils.hour
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
@@ -39,6 +41,7 @@ import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicLong
 import javax.imageio.ImageIO
 
+@OptIn(ExperimentalHazeMaterialsApi::class)
 fun main() = runBlocking {
     register(OnStartTask("Check ImageIO Plugins") { ImageIO.scanForPlugins() })
     register(OnStartTask("Hello World Task") { println("Hello World!") })
@@ -73,6 +76,9 @@ fun main() = runBlocking {
         }
         saveImageData()
         println("Images loaded: ${images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
+    })
+    register(RepeatTask("UpdateHour", taskCooldown = 200) {
+        hour += 0.075f
     })
     register(RepeatTask("Clean Wrong Images", taskCooldown = 5 * 60L * 1000L) {
         cleanWrongImages().also { it2 -> println("Cleaned $it2 wrong images") }

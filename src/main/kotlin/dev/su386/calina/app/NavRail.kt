@@ -7,32 +7,36 @@ import androidx.compose.material.icons.automirrored.filled.MenuOpen
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.materials.CupertinoMaterials
+import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.su386.calina.app.App.activeIndex
 import kotlinx.coroutines.launch
 
 // TODO: Remove this when jetpack compose v1.9.0-alpha03 is released -- see https://youtrack.jetbrains.com/issue/CMP-8323/Material3-Modifier.badgeBounds-crashes-in-1.9.0-alpha01
-private var firstCompose = true
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+private var firstCompose by mutableStateOf(true)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalHazeMaterialsApi::class)
 @Composable
 fun NavRail(vararg iconsData: NavRailIconData) {
     val state = rememberWideNavigationRailState()
     val scope = rememberCoroutineScope()
 
     WideNavigationRail(
+        modifier = Modifier
+            .hazeSource(LocalHazeState.current,2f)
+            .hazeEffect(LocalHazeState.current, CupertinoMaterials.regular()),
         state = state,
         header = {
             IconButton(
                 modifier =
                     Modifier.padding(start = 24.dp).semantics {
-                        // The button must announce the expanded or collapsed state of the rail
-                        // for accessibility.
                         stateDescription =
                             if (state.currentValue == WideNavigationRailValue.Expanded) {
                                 "Expanded"
@@ -56,8 +60,13 @@ fun NavRail(vararg iconsData: NavRailIconData) {
             }
         },
     ) {
+        LaunchedEffect(Unit) {
+            launch {
+                Thread.sleep(15000)
+                firstCompose = false
+            }
+        }
         if (firstCompose) {
-            firstCompose = false
             return@WideNavigationRail
         }
 

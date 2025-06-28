@@ -2,16 +2,11 @@ package dev.su386.calina.app
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.onClick
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
@@ -20,50 +15,59 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Photo
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material3.ExpandedDockedSearchBar
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
+import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
-import androidx.compose.material3.SearchBar
-import androidx.compose.material3.SearchBarDefaults
-import androidx.compose.material3.SearchBarValue
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopSearchBar
-import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.unit.dp
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.materials.CupertinoMaterials
+import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
+import dev.chrisbanes.haze.rememberHazeState
 import dev.su386.calina.app.App.activeIndex
 import dev.su386.calina.app.App.navigationStack
 import dev.su386.calina.app.App.panels
 import dev.su386.calina.app.App.searchBarContent
 import dev.su386.calina.utils.AutoResizeText
+import dev.su386.calina.utils.sunBackground
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalFoundationApi::class)
+val LocalHazeState = compositionLocalOf { HazeState() }
+
+@OptIn(ExperimentalFoundationApi::class, ExperimentalHazeMaterialsApi::class)
 @Composable
 @Preview
 fun App() {
     val focusManager = LocalFocusManager.current
     val stack = remember { navigationStack }
-    Box(
-        modifier = Modifier
-            .fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
+    val hazeState = rememberHazeState()
+    CompositionLocalProvider(LocalHazeState provides hazeState) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .hazeSource(LocalHazeState.current, zIndex = 0f)
+        ) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .sunBackground()
+            )
+        }
+        Box (
+            modifier = Modifier.fillMaxSize()
+                .hazeSource(LocalHazeState.current, zIndex = 1f)
+                .hazeEffect(style = CupertinoMaterials.ultraThin(), state = LocalHazeState.current)
+        )
         Row(
             modifier = Modifier
-                .fillMaxSize(1f)
-                .background(colorScheme.background)
+                .fillMaxSize()
                 .focusable(true)
                 .onClick {
                     focusManager.clearFocus()
@@ -96,7 +100,6 @@ fun App() {
             }
         }
     }
-
 }
 
 @Composable
@@ -172,7 +175,7 @@ fun CalinaSearchBar(
                 modifier = Modifier,
                 searchBarState = searchBarState,
                 textFieldState = textFieldState,
-                onSearch = { scope.launch { searchBarState.animateToCollapsed() } },
+                onSearch = { scope.launch { searchBarState.animateToCollapsed() }; onSearch(it) },
                 placeholder = { Text("Search...") },
                 leadingIcon = {
                     if (searchBarState.currentValue == SearchBarValue.Expanded) {
