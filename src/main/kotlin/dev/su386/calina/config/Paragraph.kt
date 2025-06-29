@@ -48,7 +48,7 @@ class Paragraph(
                         text = "$name:",
                         modifier = Modifier
                             .padding(12.dp)
-                            .fillMaxHeight(.5f),
+                            .height(30.dp),
                         color = MaterialTheme.colorScheme.onSurface,
                         align = Alignment.CenterStart,
                     )

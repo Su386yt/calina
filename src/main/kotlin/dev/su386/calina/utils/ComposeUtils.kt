@@ -5,6 +5,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -23,6 +24,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
+import java.time.LocalTime
 import kotlin.math.abs
 import kotlin.math.min
 import kotlin.math.pow
@@ -115,7 +117,7 @@ fun Modifier.fillMaxHeightToMax(
 
 
 
-var hour by mutableFloatStateOf(0.0f)
+var time by mutableLongStateOf(LocalTime.now().toNanoOfDay() / 1_000_000)
 @OptIn(ExperimentalHazeMaterialsApi::class)
 @Composable
 fun Modifier.sunBackground(
@@ -220,7 +222,6 @@ fun Modifier.sunBackground(
         solarMidnight + 24 * 60 * 60 * 1000 to Color(0xFF040405),
     )
 
-    val time = (hour * 60 * 60 * 1000 % (24 * 60 * 60 * 1000)).toLong()
     val sunColor = pickColorFromStops(time, sunColorStops)
     val skyColor = pickColorFromStops(time, skyColorStops)
     val nonLinearStops = getSquareRootCurveColorStops(sunColor to skyColor, 1.25)

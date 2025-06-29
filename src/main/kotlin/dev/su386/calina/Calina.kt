@@ -3,6 +3,7 @@ package dev.su386.calina
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -32,15 +33,18 @@ import dev.su386.calina.tasks.RepeatTask
 import dev.su386.calina.tasks.TaskManager
 import dev.su386.calina.tasks.TaskManager.onStart
 import dev.su386.calina.tasks.TaskManager.register
-import dev.su386.calina.utils.hour
+import dev.su386.calina.utils.time
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.util.concurrent.atomic.AtomicLong
 import javax.imageio.ImageIO
 
+var window: ComposeWindow? = null
 @OptIn(ExperimentalHazeMaterialsApi::class)
 fun main() = runBlocking {
     register(OnStartTask("Check ImageIO Plugins") { ImageIO.scanForPlugins() })
@@ -71,14 +75,16 @@ fun main() = runBlocking {
     })
     register(RepeatTask("Look for images", taskCooldown = CalinaConfig.get<Long>("performance/imageSearchTimeout") * 60L * 1000L) {
         println("Searching for images")
-        for (string in CalinaConfig.get<List<String>>("gallery/imagePaths")) {
+        for (string in CalinaConfig.get<List<String>>("gallery/folderPaths")) {
             searchForImages(string)
         }
         saveImageData()
         println("Images loaded: ${images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
     })
-    register(RepeatTask("UpdateHour", taskCooldown = 200) {
-        hour += 0.075f
+    register(RepeatTask("Update time", taskCooldown = 2 * 60 * 1000) {
+        val zone = ZoneId.systemDefault()
+        val now = ZonedDateTime.now(zone)
+        time = now.toLocalTime().toNanoOfDay() / 1_000_000
     })
     register(RepeatTask("Clean Wrong Images", taskCooldown = 5 * 60L * 1000L) {
         cleanWrongImages().also { it2 -> println("Cleaned $it2 wrong images") }
@@ -123,6 +129,7 @@ fun main() = runBlocking {
                 }
             }
         ) {
+            dev.su386.calina.window = this.window
             CalinaTheme {
                 App()
             }

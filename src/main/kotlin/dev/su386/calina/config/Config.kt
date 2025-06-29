@@ -13,6 +13,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.materials.CupertinoMaterials
+import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
+import dev.su386.calina.app.LocalHazeState
 import dev.su386.calina.utils.AutoResizeText
 
 open class Config(
@@ -34,6 +39,7 @@ open class Config(
         )
     }
 
+    @OptIn(ExperimentalHazeMaterialsApi::class)
     @Composable
     fun getComposable(
         modifier: Modifier = Modifier,
@@ -72,7 +78,6 @@ open class Config(
                                         Box(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .height(30.dp)
                                         ) {
                                             option.getComposable()
                                         }
@@ -87,9 +92,9 @@ open class Config(
                         modifier = modifier
                             .padding(vertical = 3.dp, horizontal = 16.dp)
                             .fillMaxWidth()
-                            .height(IntrinsicSize.Min)
                             .clip(RoundedCornerShape(16.dp))
-                            .background(MaterialTheme.colorScheme.surface)
+                            .hazeSource(LocalHazeState.current, zIndex = 2f)
+                            .hazeEffect(style = CupertinoMaterials.ultraThin(), state = LocalHazeState.current)
                     ) {
                         Column(
                             modifier = Modifier
@@ -117,7 +122,6 @@ open class Config(
                                             modifier = Modifier
                                                 .padding(horizontal = 5.dp)
                                                 .fillMaxWidth()
-                                                .height(35.dp * option.size),
                                         ) {
                                             if (option is Config) {
                                                 option.getComposable(sublevel = sublevel + 1)
@@ -141,14 +145,14 @@ open class Config(
                             text = displayName,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .fillMaxHeight(.75f)
+                                .height(40.dp),
                         )
 
                         AutoResizeText(
                             text = description,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .fillMaxHeight(.25f)
+                                .height(40.dp),
                         )
                     }
                 }
@@ -182,7 +186,7 @@ open class Config(
                         }
                     }
 
-                    this[en.key.trim('/')].loadFromJson(newObject[split.last()])
+                    this[en.key.trim('/')].loadFromJson(newObject[split.last()] ?: continue)
                 } else {
                     if (obj.has(previousPath)) {
                         this[en.key.trim('/')].loadFromJson(obj[previousPath])

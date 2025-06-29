@@ -38,7 +38,7 @@ object ImageManager {
             val count = AtomicInteger(0)
             val totalFiles = AtomicInteger(0)
 
-            File(path).walkTopDown()
+            File(path).listFiles()
                 .filter { file ->
                     file.extension.lowercase() in acceptedFileTypes && file.path !in loadedPaths
                 }

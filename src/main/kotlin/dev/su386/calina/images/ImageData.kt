@@ -186,8 +186,8 @@ class ImageData(
     fun cleanFilePaths(): Int {
         val oldLength = filePaths.size
         this.filePaths = this.filePaths.filter { path ->
-            File(path).exists() && CalinaConfig.get<List<String>>("gallery/imagePaths").any {
-                    folder ->  File(path).absolutePath.startsWith(File(folder).absolutePath)
+            File(path).exists() && CalinaConfig.get<List<String>>("gallery/folderPaths").any {
+                folder ->  File(path).parentFile.absolutePath == File(folder).absolutePath
             }
         }.toTypedArray()
         return oldLength - filePaths.size

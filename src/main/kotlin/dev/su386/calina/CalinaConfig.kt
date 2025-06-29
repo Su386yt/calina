@@ -4,6 +4,7 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import dev.su386.calina.config.Config
 import dev.su386.calina.config.Decimal
+import dev.su386.calina.config.FolderList
 import dev.su386.calina.config.StringList
 import dev.su386.calina.data.Database
 
@@ -12,12 +13,12 @@ object CalinaConfig: Config("Settings", "") {
 
     init {
         this.register(
-            path = "gallery/imagePaths",
-            option = StringList(
-                name = "Image Paths",
-                description = "Paths for which to look for images"
+            path = "gallery/folderPaths",
+            option = FolderList(
+                name = "Folder Paths",
+                description = "Folders in which to look for images"
             ),
-            "imageFolders" // Backwards compatibility from the previous config library
+            "imageFolders", "gallery/imagePaths"
         )
         this["gallery"].name = "Gallery"
 
