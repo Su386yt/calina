@@ -24,6 +24,7 @@ import dev.su386.calina.utils.AutoResizeText
 import java.awt.Desktop
 import java.io.File
 import javax.swing.JFileChooser
+import javax.swing.UIManager
 import javax.swing.filechooser.FileSystemView
 import kotlin.io.path.Path
 
@@ -60,6 +61,8 @@ class FolderList(
                 FilledTonalButton(
                     modifier = Modifier.height(56.dp),
                     onClick = {
+                        UIManager.createLookAndFeel(UIManager.getSystemLookAndFeelClassName())
+
                         val chooser = JFileChooser(
                             FileSystemView.getFileSystemView().defaultDirectory,
                             FileSystemView.getFileSystemView()
@@ -122,7 +125,7 @@ class FolderList(
                     }
                     InputChip(
                         modifier = Modifier.height(32.dp),
-                        selected = if (shiftPressed && path.toString().startsWith(hoveredValue) ) {
+                        selected = if (shiftPressed && hoveredValue.isNotEmpty() && path.toString().startsWith(hoveredValue) ) {
                             true
                         } else if (isHovered) {
                             true
@@ -136,9 +139,9 @@ class FolderList(
                         },
                         label = { Text(
                             label,
-                            textDecoration = if (shiftPressed && path.toString().startsWith(hoveredValue) ) {
+                            textDecoration = if (shiftPressed && hoveredValue.isNotEmpty()  && path.toString().startsWith(hoveredValue) ) {
                                 TextDecoration.LineThrough
-                            } else if (path.toString() == hoveredValue) {
+                            } else if (isHovered) {
                                 TextDecoration.LineThrough
                             } else {
                                 TextDecoration.None
