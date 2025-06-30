@@ -5,7 +5,6 @@ import com.google.gson.FieldAttributes
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import java.io.File
-import java.lang.reflect.TypeVariable
 import java.nio.file.Files
 
 /**
@@ -25,7 +24,7 @@ object Database {
      *
      * @param T - The specified class to load as
      * @param path - The path the data is stored as
-     * @return data at the database location of the instance T
+     * @return data at the database location of the instance T, or null if it doesn't exist
      */
     inline fun <reified T> readData(
         path: String,

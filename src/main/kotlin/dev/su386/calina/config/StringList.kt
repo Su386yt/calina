@@ -3,7 +3,7 @@ package dev.su386.calina.config
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.MaterialTheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material.TextField
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -66,7 +66,7 @@ class StringList(
                         modifier = Modifier
                             .padding(12.dp)
                             .fillMaxHeight(.5f),
-                        color = MaterialTheme.colors.onSurface,
+                        color = MaterialTheme.colorScheme.onSurface,
                         align = Alignment.CenterStart,
                     )
                 }
@@ -101,7 +101,7 @@ class StringList(
                     },
                     maxLines = 2,
                     isError = isError,
-                    textStyle = TextStyle(color = MaterialTheme.colors.onSurface),
+                    textStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface),
                     modifier = Modifier.fillMaxSize()
                 )
             }
