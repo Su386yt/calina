@@ -4,10 +4,7 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Checkbox
 import androidx.compose.material.Icon
@@ -17,21 +14,37 @@ import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.toPainter
+import androidx.compose.ui.input.pointer.changedToDown
+import androidx.compose.ui.input.pointer.changedToUp
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.rememberPopupPositionProviderAtPosition
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.materials.CupertinoMaterials
@@ -60,27 +73,157 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.concurrent.Semaphore
+import kotlin.collections.listOf
 import kotlin.io.path.Path
 import kotlin.io.path.name
+import kotlin.math.roundToInt
 
 
+private var lazyListState: LazyListState? = null
 private val semaphore = Semaphore(20)
 private val selectedHashes = mutableStateListOf<String>()
 private var lastClickedImageHash by mutableStateOf("")
 private val selectedTagFilters = mutableStateListOf<UUID>()
-private var imagesDisplayed by mutableStateOf(listOf<List<ImageData>>())
+private var imagesDisplayed by mutableStateOf(listOf<DayData>())
 private var imagesDisplayedList by mutableStateOf(listOf<ImageData>())
 private var imagesDisplayedCount by mutableIntStateOf(0)
+private var scrollbarStops by mutableStateOf(listOf<ScrollBarStop>())
 
 @Composable
 fun GalleryPanel() {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-        GalleryWaterfall(Modifier.fillMaxWidth())
-        FilterBar(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp)
-        )
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
+        GalleryWaterfall(Modifier.fillMaxWidth()
+            .padding(start = 5.dp,end = 10.dp))
+        Column(
+            Modifier.fillMaxSize()
+        ) {
+            FilterBar(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
+            )
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+            ) {
+
+                ScrollBar()
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class, ExperimentalHazeMaterialsApi::class)
+@Composable
+fun ScrollBar() {
+    var boxSize by remember { mutableStateOf(IntSize.Zero) }
+    var percent by remember { mutableDoubleStateOf(Double.NaN) }
+    var isClicked by remember { mutableStateOf(false) }
+    var isHovered by remember { mutableStateOf(false) }
+    val tooltipState = rememberTooltipState()
+    val scope = rememberCoroutineScope()
+
+    fun updateOffset(raw: Offset) {
+        if (boxSize.width > 0 && boxSize.height > 0) {
+            percent = (raw.y.toDouble() / boxSize.height).coerceIn(0.0, 1.0)
+            isHovered = (raw.x.toDouble() / boxSize.width) >= 0
+        }
+    }
+
+    Box(
+        modifier =  Modifier
+            .fillMaxHeight()
+            .hazeSource(LocalHazeState.current,5f)
+            .then(if (isHovered) {
+                Modifier.width(40.dp)
+                    .hazeEffect(LocalHazeState.current, CupertinoMaterials.thick())
+            } else {
+                Modifier.width(20.dp)
+                    .hazeEffect(LocalHazeState.current, CupertinoMaterials.thin())
+            })
+            .onSizeChanged { boxSize = it }
+            .pointerInput(boxSize) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        event.changes.forEach { change ->
+                            if (change.changedToDown()) isClicked = true
+                            if (change.changedToUp()) isClicked = false
+                            updateOffset(change.position)
+                        }
+                    }
+                }
+            }
+    ) {
+        if (isHovered) {
+            scope.launch { tooltipState.show() }
+            val dayIndex = if (percent.isFinite()) {
+                val imageNumber = (imagesDisplayedList.size * percent).roundToInt()
+                    .coerceIn(0, imagesDisplayedList.size - 1)
+                imagesDisplayed.indexOfFirst { it.imagesBeforeStart < imageNumber && imageNumber <= it.imagesBeforeEnd }
+                    .coerceIn(0, imagesDisplayed.size - 1)
+            } else {
+                0
+            }
+
+            LaunchedEffect(isClicked, dayIndex) {
+                if (isClicked) {
+                    lazyListState?.scrollToItem(dayIndex)
+                }
+            }
+
+            TooltipBox(
+                positionProvider = rememberPopupPositionProviderAtPosition(
+                    Offset(0.toFloat(), (boxSize.height * percent).toFloat()),
+                    alignment = Alignment.CenterEnd
+                ),
+                tooltip = {
+                    val day = imagesDisplayed[dayIndex].images.first()
+                    val format = SimpleDateFormat("MMMM YYYY", Locale.getDefault())
+                    PlainTooltip { Text(format.format(day.dateTime)) }
+                },
+                state = tooltipState,
+                content = { /* Your content that triggers the tooltip */ },
+                enableUserInput = false
+            )
+        }
+
+        val textMeasurer = rememberTextMeasurer()
+        Canvas(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            val step = size.height.toDouble() / imagesDisplayedList.size
+            val radius = 2.dp.toPx()
+            for (stop in scrollbarStops) {
+                if (stop.stopType == ScrollBarStop.StopType.YEAR) {
+                    if (isHovered) {
+                        drawText(
+                            textMeasurer = textMeasurer,
+                            text = stop.year.toString(),
+                            style = TextStyle(
+                                color = Color.Gray,
+                                textAlign = TextAlign.Center,
+                                fontSize = 10.sp
+                            ),
+                            size = Size(size.width, size.height),
+                            topLeft = Offset(0f, (stop.pos * step).toFloat()),
+                        )
+                    } else {
+                        drawRoundRect(
+                            color = Color.Gray,
+                            size = Size(radius * 3f, radius * 1.5f),
+                            topLeft = Offset((size.width - radius * 3f) / 2f , (stop.pos * step).toFloat()),
+                        )
+                    }
+                } else {
+                    drawCircle(
+                        color = Color.DarkGray,
+                        radius = radius,
+                        center = Offset(size.width / 2f, (stop.pos * step).toFloat())
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -386,24 +529,26 @@ fun FilterBar(modifier: Modifier) {
 
 @Composable
 fun GalleryWaterfall(modifier: Modifier) {
-    val listState = rememberLazyListState()
+    lazyListState = rememberLazyListState()
 
     updateImages()
-    LazyColumn(
-        state = listState,
-        modifier = modifier
-    ) {
-        item {
-            Spacer(Modifier.height(55.dp))
-        }
-        items(imagesDisplayed, key = { it.first().dateTime }) { imageGroup ->
-            Day(
-                modifier = Modifier
-                    .padding(5.dp)
-                    .fillMaxWidth(),
-                date = imageGroup.first().dateTime,
-                images = imageGroup.toTypedArray(),
-            )
+    lazyListState?.let { listState ->
+        LazyColumn(
+            state = listState,
+            modifier = modifier
+        ) {
+            item {
+                Spacer(Modifier.height(55.dp))
+            }
+            items(imagesDisplayed, key = { it.key }) { imageData ->
+                Day(
+                    modifier = Modifier
+                        .padding(5.dp)
+                        .fillMaxWidth(),
+                    date = imageData.images.first().dateTime,
+                    images = imageData.images.toTypedArray(),
+                )
+            }
         }
     }
 }
@@ -1121,20 +1266,22 @@ fun updateImages() {
     ).toDisJunction()
 
     val tagFilterConjunction = mutableListOf<TagFilter>()
-    selectedTagFilters
-        .toList()
-        .forEach { uuid ->
-            if (uuid == HiddenTag.uuid) {
-                return@forEach
+
+    Snapshot.withMutableSnapshot {
+        selectedTagFilters
+            .forEach { uuid ->
+                if (uuid == HiddenTag.uuid) {
+                    return@forEach
+                }
+
+                tags[uuid]?.let { tag ->
+                    tagFilterConjunction.add(TagFilter(tag))
+                }
             }
 
-            tags[uuid]?.let { tag ->
-                tagFilterConjunction.add(TagFilter(tag))
-            }
+        if (!selectedTagFilters.contains(HiddenTag.uuid)) {
+            tagFilterConjunction.add(HiddenItemsFilter())
         }
-
-    if (!selectedTagFilters.contains(HiddenTag.uuid)) {
-        tagFilterConjunction.add(HiddenItemsFilter())
     }
 
     imagesDisplayed = mutableListOf()
@@ -1142,11 +1289,46 @@ fun updateImages() {
         FilterJunction(JunctionType.CONJUNCTION, searchFilterDisjunction, tagFilterConjunction.toConjunction())
     ).also { imagesDisplayed ->
         imagesDisplayedList = mutableListOf<ImageData>().apply {
-            imagesDisplayed.forEach {
-                addAll(it)
-            }
+            imagesDisplayed.forEach { addAll(it.images) }
         }.toList().also { imagesDisplayedCount = it.size }
     }
+
+    updateScrollBarData()
+}
+
+private fun updateScrollBarData() {
+    val stops = mutableListOf<ScrollBarStop>()
+    var prevYear: Int? = null
+    var prevMonth: Int? = null
+    for (i in imagesDisplayedList.indices) {
+        val im = imagesDisplayedList[i]
+        if (im.calendar.get(Calendar.YEAR) != prevYear) {
+            prevYear = im.calendar.get(Calendar.YEAR)
+            prevMonth = im.calendar.get(Calendar.MONTH)
+
+            stops.add(
+                ScrollBarStop(
+                    pos = i,
+                    stopType = ScrollBarStop.StopType.YEAR,
+                    month = prevMonth,
+                    year = prevYear
+                )
+            )
+        } else if (im.calendar.get(Calendar.MONTH) != prevMonth) {
+            prevMonth = im.calendar.get(Calendar.MONTH)
+
+            stops.add(
+                ScrollBarStop(
+                    pos = i,
+                    stopType = ScrollBarStop.StopType.MONTH,
+                    month = prevMonth,
+                    year = prevYear
+                )
+            )
+        }
+    }
+
+    scrollbarStops = stops
 }
 
 private fun selectImage(image: ImageData) {
@@ -1240,5 +1422,25 @@ fun rememberAsyncImage(
                 }
             }
         }
+    }
+}
+
+data class DayData(
+    val year: Int,
+    val month: Byte,
+    val day: Byte,
+    val images: List<ImageData>,
+    val imagesBeforeStart: Int,
+) {
+    val count: Int = images.size
+    val imagesBeforeEnd = imagesBeforeStart + count
+    val key: String
+        get() = "$year$month$day"
+}
+
+private data class ScrollBarStop(val pos: Int, val stopType: StopType, val month: Int, val year: Int) {
+    enum class StopType {
+        MONTH,
+        YEAR
     }
 }

@@ -420,7 +420,13 @@ class ImageData(
     }
 
     data class ImageSize(val x: Int, val y: Int, val orientation: Orientation?) {
-        val ratio get() = x.toFloat() / y
+        val ratio get() = (x.toFloat() / y).let {
+            if (it.isFinite()) {
+                it
+            } else {
+                1f
+            }
+        }
         val compressedImageSize: ImageSize get() = if (x < y) {
                 ImageSize(COMPRESSED_IMAGE_SIZE, (COMPRESSED_IMAGE_SIZE / ratio).toInt(), orientation)
             } else {

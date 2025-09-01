@@ -25,6 +25,7 @@ import java.awt.Desktop
 import java.io.File
 import javax.swing.JFileChooser
 import javax.swing.UIManager
+import javax.swing.UnsupportedLookAndFeelException
 import javax.swing.filechooser.FileSystemView
 import kotlin.io.path.Path
 
@@ -61,8 +62,12 @@ class FolderList(
                 FilledTonalButton(
                     modifier = Modifier.height(56.dp),
                     onClick = {
-                        UIManager.createLookAndFeel(UIManager.getSystemLookAndFeelClassName())
+                        try {
+                            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
 
+                        } catch (_: UnsupportedLookAndFeelException) {
+                            UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName())
+                        }
                         val chooser = JFileChooser(
                             FileSystemView.getFileSystemView().defaultDirectory,
                             FileSystemView.getFileSystemView()

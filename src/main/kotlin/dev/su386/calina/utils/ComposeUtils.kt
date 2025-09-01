@@ -3,6 +3,7 @@ package dev.su386.calina.utils
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
@@ -24,6 +25,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import java.time.LocalTime
 import kotlin.math.abs
 import kotlin.math.min
@@ -117,7 +120,6 @@ fun Modifier.fillMaxHeightToMax(
 
 
 
-var time by mutableLongStateOf(LocalTime.now().toNanoOfDay() / 1_000_000)
 @OptIn(ExperimentalHazeMaterialsApi::class)
 @Composable
 fun Modifier.sunBackground(
@@ -128,6 +130,14 @@ fun Modifier.sunBackground(
     sunriseLength: Long = 3 * 60 * 60 * 1000,
     sunsetLength: Long = 3 * 60 * 60 * 1000,
 ): Modifier {
+    var time by remember { mutableLongStateOf(LocalTime.now().toNanoOfDay() / 1_000_000) }
+
+    LaunchedEffect(Unit) {
+        while (isActive) {
+            time = LocalTime.now().toNanoOfDay() / 1_000_000L
+            delay(5 * 60 * 1000L)
+        }
+    }
     /*
      * Color Stops for sun:
      * - Solar Noon - #09608F

@@ -19,9 +19,6 @@ import dev.chrisbanes.haze.materials.CupertinoMaterials
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.su386.calina.app.App.activeIndex
 import kotlinx.coroutines.launch
-
-// TODO: Remove this when jetpack compose v1.9.0-alpha03 is released -- see https://youtrack.jetbrains.com/issue/CMP-8323/Material3-Modifier.badgeBounds-crashes-in-1.9.0-alpha01
-private var firstCompose by mutableStateOf(true)
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalHazeMaterialsApi::class)
 @Composable
 fun NavRail(vararg iconsData: NavRailIconData) {
@@ -60,16 +57,6 @@ fun NavRail(vararg iconsData: NavRailIconData) {
             }
         },
     ) {
-        LaunchedEffect(Unit) {
-            launch {
-                Thread.sleep(15000)
-                firstCompose = false
-            }
-        }
-        if (firstCompose) {
-            return@WideNavigationRail
-        }
-
         iconsData.forEachIndexed { index, iconData ->
             WideNavigationRailItem(
                 railExpanded = state.targetValue == WideNavigationRailValue.Expanded,

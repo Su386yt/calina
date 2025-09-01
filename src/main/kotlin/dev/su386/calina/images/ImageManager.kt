@@ -1,6 +1,7 @@
 package dev.su386.calina.images
 
 import dev.su386.calina.CalinaConfig
+import dev.su386.calina.app.DayData
 import dev.su386.calina.data.Database
 import dev.su386.calina.data.Database.readData
 import dev.su386.calina.data.Database.writeData
@@ -166,18 +167,30 @@ object ImageManager {
         jobs.awaitAll().sum()
     }
 
-    fun getImagesByDate(filter: Filter): List<List<ImageData>> = images
-        .values
-        .sortedByDescending { it.date }
-        .filter { filter.isValidImage(it) }
-        .groupBy {
-            it.dateTime.toInstant()
-                .atZone(ZoneId.systemDefault())
-                .toLocalDate()
-                .atStartOfDay(ZoneId.systemDefault())
-                .toInstant()
-                .toEpochMilli()
+    fun getImagesByDate(filter: Filter): List<DayData> {
+        var imageCount = 0
+        val groupedImages = images.values
+            .sortedByDescending { it.date }
+            .filter { filter.isValidImage(it) }
+            .groupBy { image ->
+                image.dateTime.toInstant()
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDate()
+                    .atStartOfDay(ZoneId.systemDefault())
+                    .toInstant()
+                    .toEpochMilli()
+            }
+
+        return groupedImages.values.mapNotNull { dailyList ->
+            val first = dailyList.firstOrNull() ?: return@mapNotNull null
+            DayData(
+                year = first.calendar.get(Calendar.YEAR),
+                month = first.calendar.get(Calendar.MONTH).toByte(),
+                day = first.calendar.get(Calendar.DAY_OF_MONTH).toByte(),
+                images = dailyList,
+                imagesBeforeStart = imageCount
+            ).also { imageCount += it.count }
         }
-        .values
-        .toList()
+    }
+
 }

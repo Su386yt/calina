@@ -33,7 +33,6 @@ import dev.su386.calina.tasks.RepeatTask
 import dev.su386.calina.tasks.TaskManager
 import dev.su386.calina.tasks.TaskManager.onStart
 import dev.su386.calina.tasks.TaskManager.register
-import dev.su386.calina.utils.time
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
@@ -80,11 +79,6 @@ fun main() = runBlocking {
         }
         saveImageData()
         println("Images loaded: ${images.size}\nBytes loaded: ${Calina.bytesLoaded}\nMB loaded: ${Calina.bytesLoaded.toLong()/1000.0/1000.0}")
-    })
-    register(RepeatTask("Update time", taskCooldown = 2 * 60 * 1000) {
-        val zone = ZoneId.systemDefault()
-        val now = ZonedDateTime.now(zone)
-        time = now.toLocalTime().toNanoOfDay() / 1_000_000
     })
     register(RepeatTask("Clean Wrong Images", taskCooldown = 5 * 60L * 1000L) {
         cleanWrongImages().also { it2 -> println("Cleaned $it2 wrong images") }
